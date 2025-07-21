@@ -21,7 +21,7 @@ RUN addgroup -S appuser && adduser -S appuser -G appuser
 RUN chown -R appuser:appuser /var/cache/nginx /var/log/nginx /etc/nginx/conf.d
 RUN touch /var/run/nginx.pid && chown -R appuser:appuser /var/run/nginx.pid
 
-COPY --from=builder /app/build /usr/share/nginx/html
+COPY --from=builder /app/dist /usr/share/nginx/html
 
 USER appuser
 
