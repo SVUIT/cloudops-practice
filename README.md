@@ -46,14 +46,13 @@ nvm install 22.17.0
 nvm use 22.17.0
 
 # Go to frontend project
-cd frontend/roadmap-maker
+cd frontend
 
 # Install dependencies
 npm install
 
 # Start the frontend app
-npm start
+npm run dev
 ```
-The frontend runs at: http://localhost:3000
 
 ---
