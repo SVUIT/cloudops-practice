@@ -14,8 +14,10 @@ FROM gcr.io/distroless/nodejs20-debian12
 
 WORKDIR /app
 
+COPY --from=builder /app/ ./
+
 USER nonroot
 
-COPY --from=builder /app/ ./
+EXPOSE 5000
 
 CMD ["index.js"]
