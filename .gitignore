@@ -11,6 +11,7 @@
 
 # Production
 /build
+/dist
 
 # Environment variables
 .env*
@@ -56,11 +57,14 @@ azure.conf
 .azure/
 
 # IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
 # OS generated files
 .DS_Store
