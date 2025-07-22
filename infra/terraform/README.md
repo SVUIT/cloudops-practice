@@ -43,7 +43,7 @@ ARM_SUBSCRIPTION_ID = "your-subscription-id"
 
 # Terraform Variables
 environment = "prod"
-application = "kanban"
+application = "roadmap-maker"
 regions = ["southeastasia", "eastasia"]
 ```
 

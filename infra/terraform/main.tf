@@ -3,7 +3,7 @@ locals {
   regions = ["southeastasia", "eastasia"]
   common_tags = {
     environment = "prod"
-    application = "kanban"
+    application = "roadmap-maker"
     managed-by  = "terraform"
     project     = "cloudops-practice"
   }
@@ -15,7 +15,7 @@ module "resource_groups" {
   
   for_each = toset(local.regions)
   
-  name     = "kanban-prod-${each.value}-rg"
+  name     = "roadmap-maker-${each.value}-rg"
   location = each.value
   tags     = local.common_tags
 }

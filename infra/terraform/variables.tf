@@ -7,7 +7,7 @@ variable "environment" {
 variable "application" {
   description = "Application name"
   type        = string
-  default     = "kanban"
+  default     = "roadmap-maker"
 }
 
 variable "regions" {
@@ -21,7 +21,7 @@ variable "common_tags" {
   type        = map(string)
   default = {
     environment = "prod"
-    application = "kanban"
+    application = "roadmap-maker"
     managed-by  = "terraform"
     project     = "cloudops-practice"
   }
