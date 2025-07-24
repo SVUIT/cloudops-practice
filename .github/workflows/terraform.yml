@@ -1,0 +1,110 @@
+name: Terraform CI/CD
+
+on:
+  pull_request:
+    branches:
+      - 'main'
+  push:
+    branches:
+      - 'main'
+  
+permissions: 
+  contents: read
+  pull-requests: write
+
+env:
+  TF_TOKEN_app_terraform_io: ${{ secrets.HCP_API }}
+
+jobs:
+  terraform:
+    name: Terraform plan & apply
+    runs-on: ubuntu-latest
+
+    concurrency: 
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with: 
+          terraform_version: 1.4.0
+
+      - name: Terraform Init
+        id: init
+        working-directory: infra/terraform
+        run: terraform init
+
+      - name: Terraform Validate
+        id: validate
+        working-directory: infra/terraform
+        run: terraform validate -no-color
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: infra/terraform
+        if: github.event_name == 'pull_request'
+        run: |
+          terraform plan -no-color > tfplan.txt
+          echo "PLAN_EXIT_CODE=$?" >> $GITHUB_ENV
+        continue-on-error: true
+
+      - name: Comment Plan 
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('infra/terraform/tfplan.txt', 'utf8');
+            const exitCode = process.env.PLAN_EXIT_CODE;
+            const output = `#### Terraform Plan 📖
+            <details><summary>Show Plan</summary>
+
+            \`\`\`hcl
+            ${plan}
+            \`\`\`
+
+            </details>
+
+            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+
+            const issue_number = context.issue.number;
+            const repo = context.repo;
+
+            const comments = await github.rest.issues.listComments({
+              owner: repo.owner,
+              repo: repo.repo,
+              issue_number: issue_number,
+            });
+
+            const botComment = comments.data.find(comment =>
+              comment.user.type === 'Bot' && comment.body.includes('Terraform Plan')
+            );
+
+            if (botComment) {
+              await github.rest.issues.deleteComment({
+                owner: repo.owner,
+                repo: repo.repo,
+                comment_id: botComment.id,
+              });
+            }
+
+            await github.rest.issues.createComment({
+              issue_number,
+              owner: repo.owner,
+              repo: repo.repo,
+              body: output
+            });
+
+            if (exitCode == "1") {
+              core.setFailed("Terraform plan failed.");
+            }
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        working-directory: infra/terraform
+        run: terraform apply -auto-approve
