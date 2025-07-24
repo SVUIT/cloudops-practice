@@ -56,3 +56,5 @@ npm run dev
 ```
 
 ---
+
+test terraform ci
