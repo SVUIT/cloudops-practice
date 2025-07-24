@@ -1,0 +1,31 @@
+# Database data folder
+postgres_data/
+
+# Environment files
+.env
+
+# Node modules
+node_modules/
+
+# Logs
+logs/
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Dependency directories
+node_modules/
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+/generated/prisma
