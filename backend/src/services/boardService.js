@@ -7,7 +7,10 @@ const getAllBoards = async () => {
       where: { isDeleted: false },
       include: {
         tasks: {
-          where: { isArchived: false },
+          where: {
+            isArchived: false,
+            isDeleted: false
+          },
           orderBy: { order: 'asc' }
         }
       },
@@ -34,10 +37,16 @@ const createBoard = async (data) => {
 const getBoardById = async (id) => {
   try {
     return await prisma.board.findUnique({
-      where: { id },
+      where: {
+        id,
+        isDeleted: false
+      },
       include: {
-        tasks: {
-          where: { isArchived: false },
+        cards: {
+          where: {
+            isArchived: false,
+            isDeleted: false
+          },
           orderBy: { order: 'asc' }
         }
       }
