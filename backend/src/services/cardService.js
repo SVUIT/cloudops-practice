@@ -3,8 +3,11 @@ const prisma = require("../prisma/prismaClient");
 
 const getAllCards = async () => {
   try {
-    return await prisma.task.findMany({
-      where: { isArchived: false },
+    return await prisma.card.findMany({
+      where: {
+        isArchived: false,
+        isDeleted: false
+      },
       include: { board: true },
       orderBy: { createdAt: 'desc' }
     });
@@ -16,7 +19,7 @@ const getAllCards = async () => {
 
 const createCard = async (data) => {
   try {
-    return await prisma.task.create({
+    return await prisma.card.create({
       data,
       include: { board: true }
     });
@@ -28,8 +31,11 @@ const createCard = async (data) => {
 
 const getCardById = async (id) => {
   try {
-    return await prisma.task.findUnique({
-      where: { id },
+    return await prisma.card.findUnique({
+      where: {
+        id,
+        isDeleted: false
+      },
       include: { board: true }
     });
   } catch (error) {
@@ -40,8 +46,11 @@ const getCardById = async (id) => {
 
 const updateCard = async (id, data) => {
   try {
-    return await prisma.task.update({
-      where: { id },
+    return await prisma.card.update({
+      where: {
+        id,
+        isDeleted: false
+      },
       data,
       include: { board: true }
     });
@@ -53,9 +62,9 @@ const updateCard = async (id, data) => {
 
 const deleteCard = async (id) => {
   try {
-    return await prisma.task.update({
+    return await prisma.card.update({
       where: { id },
-      data: { isArchived: true }
+      data: { isDeleted: true }
     });
   } catch (error) {
     console.error('Service error in deleteCard:', error);
@@ -65,10 +74,11 @@ const deleteCard = async (id) => {
 
 const getCardsByBoard = async (boardId) => {
   try {
-    return await prisma.task.findMany({
+    return await prisma.card.findMany({
       where: {
         boardId,
-        isArchived: false
+        isArchived: false,
+        isDeleted: false
       },
       include: { board: true },
       orderBy: { order: 'asc' }

@@ -13,12 +13,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  createdAt DateTime @default(now())
-}
 
 model Board {
   id        String   @id @default(uuid())
@@ -29,7 +23,7 @@ model Board {
   updatedAt DateTime @updatedAt @map("updated_at")
   
   // Relationship: Board có nhiều Tasks
-  tasks     Card[]
+  cards    Card[]
   
   @@map("boards")
 }
@@ -48,6 +42,7 @@ model Card {
   labels       String[]  @default([])
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
+  isDeleted    Boolean   @default(false)
   
   // Relationship: Task thuộc về một Board
   board        Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
