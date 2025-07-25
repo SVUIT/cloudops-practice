@@ -1,6 +1,5 @@
 // src/server.js
 const express = require("express");
-const userRoutes = require("./routes/userRoutes");
 const boardRoutes = require("./routes/boardRoutes");
 const cardRoutes = require("./routes/cardRoutes");
 
@@ -12,7 +11,6 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 
 // Register routes
-app.use("/users", userRoutes);
 app.use("/boards", boardRoutes);
 app.use("/cards", cardRoutes)
 
