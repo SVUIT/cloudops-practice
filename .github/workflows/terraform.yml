@@ -7,17 +7,22 @@ on:
   push:
     branches:
       - 'main'
-  
+
 permissions: 
   contents: read
   pull-requests: write
 
 env:
   TF_TOKEN_app_terraform_io: ${{ secrets.HCP_API }}
+  TF_WORKING_DIR: infra/terraform
+  AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
+  AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
+  AZURE_STORAGE_CONTAINER: ${{ secrets.AZURE_STORAGE_CONTAINER }}
 
 jobs:
-  terraform:
-    name: Terraform plan & apply
+  terraform-plan:
+    name: Terraform Validate & Plan
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
     concurrency: 
@@ -33,34 +38,42 @@ jobs:
         with: 
           terraform_version: 1.4.0
 
+      - name: Install Azure CLI
+        run: |
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
       - name: Terraform Init
-        id: init
-        working-directory: infra/terraform
+        working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform init
 
       - name: Terraform Validate
-        id: validate
-        working-directory: infra/terraform
+        working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform validate -no-color
 
       - name: Terraform Plan
-        id: plan
-        working-directory: infra/terraform
-        if: github.event_name == 'pull_request'
+        working-directory: ${{ env.TF_WORKING_DIR }}
         run: |
-          terraform plan -no-color > tfplan.txt
-          echo "PLAN_EXIT_CODE=$?" >> $GITHUB_ENV
-        continue-on-error: true
+          terraform plan -out=tfplan.binary
+          terraform show -no-color tfplan.binary > tfplan.txt
 
-      - name: Comment Plan 
-        if: github.event_name == 'pull_request'
+      - name: Upload tfplan to Azure Blob Storage
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          az storage blob upload \
+            --account-name $AZURE_STORAGE_ACCOUNT \
+            --account-key $AZURE_STORAGE_KEY \
+            --container-name $AZURE_STORAGE_CONTAINER \
+            --file tfplan.binary \
+            --name tfplan-${{ github.sha }}.binary \
+            --overwrite true
+
+      - name: Comment Plan
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
             const plan = fs.readFileSync('infra/terraform/tfplan.txt', 'utf8');
-            const exitCode = process.env.PLAN_EXIT_CODE;
             const output = `#### Terraform Plan 📖
             <details><summary>Show Plan</summary>
 
@@ -100,11 +113,48 @@ jobs:
               body: output
             });
 
-            if (exitCode == "1") {
-              core.setFailed("Terraform plan failed.");
-            }
+  terraform-apply:
+    name: Terraform Apply
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with: 
+          terraform_version: 1.4.0
+
+      - name: Install Azure CLI
+        run: |
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+      - name: Terraform Init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform init
+
+      - name: Download tfplan from Azure Blob Storage
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          az storage blob download \
+            --account-name $AZURE_STORAGE_ACCOUNT \
+            --account-key $AZURE_STORAGE_KEY \
+            --container-name $AZURE_STORAGE_CONTAINER \
+            --name tfplan-${{ github.sha }}.binary \
+            --file tfplan.binary
 
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        working-directory: infra/terraform
-        run: terraform apply -auto-approve
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform apply tfplan.binary
+
+      - name: Delete tfplan after apply
+        if: success()
+        run: |
+          az storage blob delete \
+            --account-name $AZURE_STORAGE_ACCOUNT \
+            --account-key $AZURE_STORAGE_KEY \
+            --container-name $AZURE_STORAGE_CONTAINER \
+            --name tfplan-${{ github.sha }}.binary \
+            --auth-mode key
