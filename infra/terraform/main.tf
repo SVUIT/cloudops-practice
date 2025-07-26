@@ -55,13 +55,13 @@ module "primary_aks" {
 
   # Node pool configuration
   node_count          = 2 # Create 2 nodes initially for primary cluster
-  node_vm_size        = "Standard_B1ms"
+  node_vm_size        = "Standard_B2s" # 2 vCPU, 4GB RAM
   enable_auto_scaling = false
   # min_count           = 1
   # max_count           = 5
 
   # Resource limits
-  max_pods        = 30
+  max_pods        = 50
   os_disk_size_gb = 32
 
   # Network configuration
@@ -111,11 +111,6 @@ resource "azurerm_postgresql_flexible_server" "primary" {
     active_directory_auth_enabled = true
     password_auth_enabled         = false
     tenant_id                     = data.azurerm_client_config.current.tenant_id
-  }
-
-  high_availability {
-    mode                      = "ZoneRedundant"
-    standby_availability_zone = "2"
   }
 
   tags = local.common_tags
