@@ -54,8 +54,6 @@ jobs:
     needs: [setup, changes]
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
-    env:
-      IMAGE_BACKEND: ${{ env.REGISTRY }}/${{ needs.setup.outputs.repo_name }}/roadmap-maker-backend
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -78,6 +76,9 @@ jobs:
           restore-keys: |
             backend-${{ runner.os }}-
 
+      - name: Set IMAGE_BACKEND
+        run: echo "IMAGE_BACKEND=${{ env.REGISTRY }}/${{ needs.setup.outputs.repo_name }}/roadmap-maker-backend" >> $GITHUB_ENV
+
       - name: Build backend Docker image
         uses: docker/build-push-action@v5
         with:
@@ -94,8 +95,6 @@ jobs:
     needs: [setup, changes]
     if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
-    env: 
-      IMAGE_FRONTEND: ${{ env.REGISTRY }}/${{ needs.setup.outputs.repo_name }}/roadmap-maker-frontend
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -117,6 +116,9 @@ jobs:
           key: frontend-${{ runner.os }}-${{ github.sha }}
           restore-keys: |
             frontend-${{ runner.os }}-
+
+      - name: Set IMAGE_FRONTEND
+        run: echo "IMAGE_FRONTEND=${{ env.REGISTRY }}/${{ needs.setup.outputs.repo_name }}/roadmap-maker-frontend" >> $GITHUB_ENV
 
       - name: Build frontend Docker image
         uses: docker/build-push-action@v5
