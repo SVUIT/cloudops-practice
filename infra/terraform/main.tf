@@ -76,3 +76,80 @@ module "primary_aks" {
 
   depends_on = [module.primary_network]
 }
+
+# Data source for current Azure client configuration
+data "azurerm_client_config" "current" {} # get info about the current Azure client
+
+# Data source for Azure AD Service Principal
+data "azuread_service_principal" "current" {
+  client_id = data.azurerm_client_config.current.client_id # Use the client_id from the azurerm_client_config data source
+}
+
+# Random password for PostgreSQL admin for Azure Entra ID
+resource "random_password" "postgresql_admin_password" {
+  length  = 16
+  special = true
+}
+
+# PostgreSQL Flexible Server for each region
+resource "azurerm_postgresql_flexible_server" "primary" {
+  name                = "roadmap-maker-${local.primary_region}-psql"
+  location            = local.primary_region
+  resource_group_name = module.resource_groups[local.primary_region].name
+
+  administrator_login    = "psqladmin"
+  administrator_password = random_password.postgresql_admin_password.result
+
+  sku_name   = "B_Standard_B1ms"
+  version    = "15"
+  storage_mb = 32768 # 32GB
+
+  backup_retention_days        = 7
+  geo_redundant_backup_enabled = true
+
+  authentication {
+    active_directory_auth_enabled = true
+    password_auth_enabled         = false
+    tenant_id                     = data.azurerm_client_config.current.tenant_id
+  }
+
+  high_availability {
+    mode                      = "ZoneRedundant"
+    standby_availability_zone = "2"
+  }
+
+  tags = local.common_tags
+}
+
+# PostgreSQL Active Directory Administrator
+resource "azurerm_postgresql_flexible_server_active_directory_administrator" "primary" {
+  server_name         = azurerm_postgresql_flexible_server.primary.name
+  resource_group_name = module.resource_groups[local.primary_region].name
+  tenant_id           = data.azurerm_client_config.current.tenant_id
+  object_id           = data.azurerm_client_config.current.object_id
+  principal_name      = data.azuread_service_principal.current.display_name
+  principal_type      = "ServicePrincipal"
+}
+
+# PostgreSQL Database
+resource "azurerm_postgresql_flexible_server_database" "primary" {
+  name      = "roadmap_maker"
+  server_id = azurerm_postgresql_flexible_server.primary.id
+  collation = "en_US.utf8"
+  charset   = "utf8"
+}
+
+# Firewall rule for Azure services
+resource "azurerm_postgresql_flexible_server_firewall_rule" "azure_services" {
+  name             = "AllowAzureServices"
+  server_id        = azurerm_postgresql_flexible_server.primary.id
+  start_ip_address = "0.0.0.0"
+  end_ip_address   = "0.0.0.0"
+}
+
+resource "azurerm_postgresql_flexible_server_firewall_rule" "aks_subnet" {
+  name             = "AllowAKSSubnet"
+  server_id        = azurerm_postgresql_flexible_server.primary.id
+  start_ip_address = "10.0.1.0"
+  end_ip_address   = "10.0.1.255"
+}
