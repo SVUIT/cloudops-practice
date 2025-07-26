@@ -2,6 +2,7 @@
 locals {
   regions        = ["southeastasia", "eastasia"]
   primary_region = "southeastasia"
+
   common_tags = {
     environment = "prod"
     application = "roadmap-maker"
@@ -75,4 +76,11 @@ module "primary_aks" {
   })
 
   depends_on = [module.primary_network]
+}
+  
+  for_each = toset(local.regions)
+  
+  name     = "roadmap-maker-${each.value}-rg"
+  location = each.value
+  tags     = local.common_tags
 }
