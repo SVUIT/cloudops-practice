@@ -11,11 +11,11 @@ docker-compose up -d
 
 ### 2. Setup Prisma (one-time):
 ```bash
+#Pushes schema changes to the database without creating migration files
+npx prisma db push
 
-# Generate Prisma client
-npx prisma generate
-
-npx prisma migrate dev --name init
+#Executes migration files to update the database schema.
+npx prisma migrate deploy
 ```
 
 ### 3. Run Backend Application:
