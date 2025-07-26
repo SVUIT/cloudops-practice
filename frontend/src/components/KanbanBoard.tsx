@@ -115,15 +115,16 @@ function KanbanBoard() {
         </div>
     );
 
-    function createTask(columnId: Id) {
+    function createTask(columnId: Id, content?: string) {
         const newTask: Task = {
             id: generateId(),
             columnId,
-            content: `Task ${tasks.length + 1}`,
+            content: content ?? `Task ${tasks.length + 1}`,
         };
 
         setTasks([...tasks, newTask]);
     }
+
 
     function deleteTask(id: Id) {
         const newTasks = tasks.filter((task) => task.id !== id);

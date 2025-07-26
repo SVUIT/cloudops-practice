@@ -11,7 +11,7 @@ interface Props{
     deleteColumn: (id: Id) => void;
     updateColumn: (id: Id, title: string) => void;
 
-    createTask: (columnId: Id) => void;
+    createTask: (columnId: Id, content?: string) => void;
     updateTask: (id: Id, content: string) => void;
     deleteTask: (id: Id) => void;
     tasks: Task[];
@@ -29,6 +29,14 @@ function ColumnContainer(props: Props) {
     } = props;
 
     const [editMode, setEditMode] = useState(false);
+
+    const [showTaskForm, setShowTaskForm] = useState(false);
+
+    const [formData, setFormData] = useState({
+        subjectName: "",
+        semester: "",
+        subjectType: ""
+    });
 
     const tasksIds = useMemo(() => {
         return tasks.map((task) => task.id);
@@ -126,10 +134,12 @@ function ColumnContainer(props: Props) {
                         py-1
                         text-sm
                         rounded-full
+                        text-white
                     "
                 >
-                    0
+                    {tasks.length}
                 </div>
+
                 {!editMode && column.title}
                 {editMode && (
                     <input 
@@ -175,20 +185,87 @@ function ColumnContainer(props: Props) {
                         />
                 ))} 
             </SortableContext>
+
+            {showTaskForm && (
+                <div className="fixed inset-0 bg-white/30 flex justify-center items-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-lg w-[90%] max-w-md space-y-4">
+                        <h2 className="text-xl font-semibold text-center text-black">Add New Task</h2>
+
+                        <input
+                            type="text"
+                            placeholder="Subject Name"
+                            className="w-full p-2 border rounded text-black"
+                            value={formData.subjectName}
+                            onChange={(e) =>
+                                setFormData({ ...formData, subjectName: e.target.value })
+                            }
+                        />
+
+                        <select
+                            className="w-full p-2 border rounded text-black"
+                            value={formData.semester}
+                            onChange={(e) =>
+                                setFormData({ ...formData, semester: e.target.value })
+                            }
+                        >
+                            <option value="">Select Semester</option>
+                            <option value="Semester 1">Semester 1</option>
+                            <option value="Semester 2">Semester 2</option>
+                        </select>
+
+                        <select
+                            className="w-full p-2 border rounded text-black"
+                            value={formData.subjectType}
+                            onChange={(e) =>
+                                setFormData({ ...formData, subjectType: e.target.value })
+                            }
+                        >
+                            <option value="">Select Type</option>
+                            <option value="Core">a</option>
+                            <option value="Elective">b</option>
+                        </select>
+
+                        <div className="flex justify-end gap-2 pt-2">
+                            <button
+                                className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400"
+                                onClick={() => setShowTaskForm(false)}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2"
+                                onClick={() => {
+                                    const content = `${formData.subjectName}\nSemester: ${formData.semester}\nType: ${formData.subjectType}`;
+                                    createTask(column.id, content);
+                                    setFormData({
+                                        subjectName: "",
+                                        semester: "",
+                                        subjectType: ""
+                                    });
+                                    setShowTaskForm(false);
+                                }}
+                            >
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
         {/* Column footer */}
-        <button className="flex gap-2 items-center 
-        border-gray-50 border-2 rounded-md p-4
-        border-x-gray-50
-        hover:bg-gray-300 hover:text-rose-50
-        active:bg-black"
-            onClick={() => {
-                createTask(column.id);
-            }}
+        <button
+            className="text-black flex gap-2 items-center 
+                border-gray-50 border-2 rounded-md p-4
+                border-x-gray-50
+                hover:bg-gray-600 hover:text-white
+                active:bg-black"
+            onClick={() => setShowTaskForm(true)}
         >
             <PlusIcon />
             Add task
         </button>
+
     </div>
     );
 }
