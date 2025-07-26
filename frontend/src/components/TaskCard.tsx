@@ -106,14 +106,28 @@ function TaskCard({ task, deleteTask, updateTask }: Props) {
             overflow-x-hidden whitespace-pre-wrap">
                 {task.content}
             </p>
-            {mouseIsOver && ( 
-                <button 
-                onClick={() => {
-                    deleteTask(task.id);
-                }}
-                className="stroke-white absolute right-4 top-1/2-translate-y-1/2 bg-gray-500 p-2 rounded opacity-60 hover:opacity-100">
-                <TrashIcon />
-            </button>
+            {mouseIsOver && (
+                <div className="absolute right-4 top-2 flex gap-2">
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation(); 
+                            toggleEditMode();
+                        }}
+                        className="stroke-white bg-gray-500 p-2 rounded opacity-60 hover:opacity-100"
+                    >
+                        {}
+                        Edit
+                    </button>
+
+                    <button
+                        onClick={() => {
+                            deleteTask(task.id);
+                        }}
+                        className="stroke-white bg-gray-500 p-2 rounded opacity-60 hover:opacity-100"
+                    >
+                        <TrashIcon />
+                    </button>
+                </div>
             )}
         </div>
     )
