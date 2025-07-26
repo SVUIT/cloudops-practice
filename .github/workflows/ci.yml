@@ -34,7 +34,7 @@ jobs:
   setup:
     # needs: changes
     runs-on: ubuntu-latest
-    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true'
+    #if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true'
     outputs:
       sha: ${{ steps.vars.outputs.sha }}
       repo_name: ${{ steps.convert.outputs.repo }}
@@ -52,7 +52,7 @@ jobs:
 
   build-backend:
     needs: setup
-    if: needs.changes.outputs.backend == 'true'
+    #if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source
@@ -93,7 +93,7 @@ jobs:
 
   build-frontend:
     needs: setup
-    if: needs.changes.outputs.frontend == 'true'
+    #if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source
