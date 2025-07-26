@@ -7,7 +7,7 @@ const router = express.Router();
  * @swagger
  * tags:
  *   name: Boards
- *   description: Quản lý boards
+ *   description: Quản lý Boards
  */
 
 /**
@@ -27,9 +27,38 @@ const router = express.Router();
  *                 type: object
  *                 properties:
  *                   id:
- *                     type: integer
- *                   name:
  *                     type: string
+ *                   title:
+ *                     type: string
+ *                   order:
+ *                     type: integer
+ *                   isDeleted:
+ *                     type: boolean
+ *                   createdAt:
+ *                     type: string
+ *                     format: date-time
+ *                   updatedAt:
+ *                     type: string
+ *                     format: date-time
+ *                   cards:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         title:
+ *                           type: string
+ *                         order:
+ *                           type: integer
+ *                         boardId:
+ *                           type: string
+ *                         createdAt:
+ *                           type: string
+ *                           format: date-time
+ *                         updatedAt:
+ *                           type: string
+ *                           format: date-time
  */
 router.get('/', boardController.getAllBoards);
 
@@ -45,9 +74,16 @@ router.get('/', boardController.getAllBoards);
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - title
+ *               - order
  *             properties:
- *               name:
+ *               title:
  *                 type: string
+ *                 example: "Kế hoạch học kỳ"
+ *               order:
+ *                 type: integer
+ *                 example: 1
  *     responses:
  *       201:
  *         description: Tạo board thành công
@@ -57,9 +93,20 @@ router.get('/', boardController.getAllBoards);
  *               type: object
  *               properties:
  *                 id:
- *                   type: integer
- *                 name:
  *                   type: string
+ *                   format: uuid
+ *                 title:
+ *                   type: string
+ *                 order:
+ *                   type: integer
+ *                 isDeleted:
+ *                   type: boolean
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 updatedAt:
+ *                   type: string
+ *                   format: date-time
  */
 router.post('/', boardController.createBoard);
 
@@ -74,19 +121,55 @@ router.post('/', boardController.createBoard);
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
- *     responses:
+ *           type: string
+*     responses:
  *       200:
- *         description: Trả về thông tin board
+ *         description: Trả về thông tin board và danh sách các cards liên quan
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
  *                 id:
- *                   type: integer
- *                 name:
  *                   type: string
+ *                 title:
+ *                   type: string
+ *                 order:
+ *                   type: integer
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 updatedAt:
+ *                   type: string
+ *                   format: date-time
+ *                 isDeleted:
+ *                   type: boolean
+ *                 cards:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       content:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       subjectName:
+ *                         type: string
+ *                       semester:
+ *                         type: string
+ *                       typeSubject:
+ *                         type: string
+ *                       dueDate:
+ *                         type: string
+ *                         format: date-time
+ *                       labels:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                       order:
+ *                         type: integer
  *       404:
  *         description: Không tìm thấy board
  */
@@ -103,7 +186,7 @@ router.get('/:id', boardController.getBoardById);
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
+ *           type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -111,8 +194,12 @@ router.get('/:id', boardController.getBoardById);
  *           schema:
  *             type: object
  *             properties:
- *               name:
+ *               title:
  *                 type: string
+ *                 example: "Kế hoạch học kỳ"
+ *               order:
+ *                 type: integer
+ *                 example: 1
  *     responses:
  *       200:
  *         description: Cập nhật board thành công
@@ -122,9 +209,19 @@ router.get('/:id', boardController.getBoardById);
  *               type: object
  *               properties:
  *                 id:
- *                   type: integer
- *                 name:
  *                   type: string
+ *                 title:
+ *                   type: string
+ *                 order:
+ *                   type: integer
+ *                 isDeleted:
+ *                   type: boolean
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 updatedAt:
+ *                   type: string
+ *                   format: date-time
  *       404:
  *         description: Không tìm thấy board
  */
@@ -134,14 +231,14 @@ router.put('/:id', boardController.updateBoard);
  * @swagger
  * /boards/{id}:
  *   delete:
- *     summary: Xóa một board
+ *     summary: Xóa một board theo ID
  *     tags: [Boards]
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
+ *           type: string
  *     responses:
  *       204:
  *         description: Xóa board thành công

@@ -1,4 +1,5 @@
 // src/server.js
+require('dotenv').config();
 const express = require("express");
 const boardRoutes = require("./routes/boardRoutes");
 const cardRoutes = require("./routes/cardRoutes");
