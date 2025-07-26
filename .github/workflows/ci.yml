@@ -12,27 +12,27 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
-  changes:
-    runs-on: ubuntu-latest
-    outputs:
-      backend: ${{ steps.filter.outputs.backend }}
-      frontend: ${{ steps.filter.outputs.frontend }}
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
-
-      - name: Filter changes paths
-        id: filter
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            backend:
-              - 'backend/**'
-            frontend:
-              - 'frontend/**' 
+  #changes:
+#    runs-on: ubuntu-latest
+#    outputs:
+#      backend: ${{ steps.filter.outputs.backend }}
+#      frontend: ${{ steps.filter.outputs.frontend }}
+#    steps:
+#      - name: Checkout source
+#        uses: actions/checkout@v4
+#
+#      - name: Filter changes paths
+#        id: filter
+#       uses: dorny/paths-filter@v3
+#        with:
+#          filters: |
+#            backend:
+#            - 'backend/**'
+#           frontend:
+#              - 'frontend/**' 
 
   setup:
-    needs: changes
+    # needs: changes
     runs-on: ubuntu-latest
     if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true'
     outputs:
@@ -51,7 +51,7 @@ jobs:
         run: echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
   build-backend:
-    needs: [setup, changes]
+    needs: setup
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -92,7 +92,7 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache-backend
 
   build-frontend:
-    needs: [setup, changes]
+    needs: setup
     if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     steps:
