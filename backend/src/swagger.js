@@ -16,7 +16,11 @@ const options = {
 const swaggerSpec = swaggerJsdoc(options);
 
 function setupSwagger(app) {
-  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    swaggerOptions: {
+      defaultModelsExpandDepth: -1  // 👈 Ẩn hoàn toàn phần Schemas
+    }
+  }));
 }
 
 module.exports = setupSwagger;
