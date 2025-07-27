@@ -2,6 +2,7 @@ const prisma = require("../prisma/prismaClient");
 
 
 const getAllBoards = async () => {
+  console.log(process.env.DATABASE_URL);
   try {
     return await prisma.board.findMany({
       where: { isDeleted: false },

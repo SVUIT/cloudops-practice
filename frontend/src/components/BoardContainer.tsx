@@ -1,27 +1,27 @@
 import { SortableContext, useSortable } from "@dnd-kit/sortable";
 import TrashIcon from "../icons/TrashIcon";
-import type { Column, Id, Task } from "../types";
+import type { Board, Id, Task } from "../types";
 import { CSS } from "@dnd-kit/utilities";
 import { useMemo, useState } from "react";
 import PlusIcon from "../icons/PlusIcon";
 import TaskCard from "./TaskCard";
 
 interface Props{
-    column: Column;
-    deleteColumn: (id: Id) => void;
-    updateColumn: (id: Id, title: string) => void;
+    board: Board;
+    deleteBoard: (id: Id) => void;
+    updateBoard: (id: Id, title: string) => void;
 
-    createTask: (columnId: Id, content?: string) => void;
+    createTask: (boardId: Id, content?: string) => void;
     updateTask: (id: Id, content: string) => void;
     deleteTask: (id: Id) => void;
     tasks: Task[];
 }
 
-function ColumnContainer(props: Props) {
+function BoardContainer(props: Props) {
     const { 
-        column, 
-        deleteColumn, 
-        updateColumn, 
+        board, 
+        deleteBoard, 
+        updateBoard, 
         createTask, 
         tasks, 
         deleteTask, 
@@ -50,10 +50,10 @@ function ColumnContainer(props: Props) {
         transition, 
         isDragging 
     } = useSortable({
-            id: column.id,
+            id: board.id,
             data: {
-                type: "Column",
-                column,
+                type: "Board",
+                board,
             },
             disabled: editMode,
         });
@@ -76,7 +76,7 @@ function ColumnContainer(props: Props) {
                     w-[350px]
                     h-[500px]
                     max-h-[500px]
-                    rounded-md
+                    rounded-xl
                     flex
                     flex-col
             "
@@ -91,16 +91,19 @@ function ColumnContainer(props: Props) {
             ref={setNodeRef}
             style={style}
             className="
-                bg-gray-200
+                bg-[#2E2E36] 
+                border border-[#4A515B]
                 w-[350px]
                 h-[500px]
                 max-h-[500px]
-                rounded-mg
                 flex
                 flex-col
+                rounded-xl 
+                shadow-lg 
+                dark:shadow-black/40
             "
         >
-        {/* Column title */}
+        {/* Board title */}
         <div 
             {...attributes}
             {...listeners}
@@ -109,16 +112,14 @@ function ColumnContainer(props: Props) {
             }}
         
             className="
-                bg-gray-500
+                bg-[#23232a]
                 h-[60px]
                 cursor-grab
                 rounded-md
-                rounded-b-none
+                rounded-xl
                 p-3
                 text-md
                 font-bold
-                border-white
-                border-4
                 flex
                 items-center
                 justify-between
@@ -140,12 +141,12 @@ function ColumnContainer(props: Props) {
                     {tasks.length}
                 </div>
 
-                {!editMode && column.title}
+                {!editMode && board.title}
                 {editMode && (
                     <input 
                         className="bg-black focus:border-rose-500 border rounded outline-none px-2"
-                        value={column.title}
-                        onChange={(e) => updateColumn(column.id, e.target.value)}
+                        value={board.title}
+                        onChange={(e) => updateBoard(board.id, e.target.value)}
                         autoFocus
                         onBlur={() => {
                             setEditMode(false);
@@ -159,7 +160,7 @@ function ColumnContainer(props: Props) {
             </div>
             <button
                 onClick={() => {
-                    deleteColumn(column.id);
+                    deleteBoard(board.id);
                 }}
                 className="
                     stroke-gray-200
@@ -173,7 +174,7 @@ function ColumnContainer(props: Props) {
                 <TrashIcon />
             </button>
         </div>
-        {/* Column task container */}
+        {/* Board task container */}
         <div className="flex flex-grow flex-col gap-4 p-2 overflow-x-hidden overflow-y-auto">
             <SortableContext items={tasksIds}>
                 {tasks.map((task) => (
@@ -188,7 +189,7 @@ function ColumnContainer(props: Props) {
 
             {showTaskForm && (
                 <div className="fixed inset-0 bg-white/30 flex justify-center items-center z-50">
-                    <div className="bg-white p-6 rounded-lg shadow-lg w-[90%] max-w-md space-y-4">
+                    <div className="bg-[#2E2E36] p-6 rounded-xl shadow-lg w-[90%] max-w-md space-y-4">
                         <h2 className="text-xl font-semibold text-center text-black">Add New Task</h2>
 
                         <input
@@ -236,7 +237,7 @@ function ColumnContainer(props: Props) {
                                 className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2"
                                 onClick={() => {
                                     const content = `${formData.subjectName}\nSemester: ${formData.semester}\nType: ${formData.subjectType}`;
-                                    createTask(column.id, content);
+                                    createTask(board.id, content);
                                     setFormData({
                                         subjectName: "",
                                         semester: "",
@@ -253,7 +254,7 @@ function ColumnContainer(props: Props) {
             )}
 
         </div>
-        {/* Column footer */}
+        {/* Board footer */}
         <button
             className="text-black flex gap-2 items-center 
                 border-gray-50 border-2 rounded-md p-4
@@ -270,4 +271,4 @@ function ColumnContainer(props: Props) {
     );
 }
 
-export default ColumnContainer;
+export default BoardContainer;
