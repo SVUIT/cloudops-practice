@@ -14,6 +14,9 @@ app.use(express.json());
 // Swagger docs
 setupSwagger(app);
 
+app.get('/', (req, res) => {
+  res.redirect('/api-docs');
+});
 // Register routes
 app.use("/boards", boardRoutes);
 app.use("/cards", cardRoutes)
