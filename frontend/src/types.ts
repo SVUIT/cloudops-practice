@@ -1,13 +1,14 @@
 export type Id = string | number;
 
-export type Column = {
-    id: Id;
-    title: string;
+export interface Board {
+  id: Id;
+  title: string;
 }
 
-export type Task = {
-    id: Id;
-    columnId: Id;
-    content: string;
+export interface Task {
+  id: Id;
+  boardId: Id;
+  content: string;
 }
+
 
