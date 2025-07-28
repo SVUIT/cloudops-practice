@@ -28,14 +28,14 @@ module "primary_network" {
   vnet_name           = "roadmap-maker-primary-vnet"
   location            = local.primary_region
   resource_group_name = module.resource_groups[local.primary_region].name
-  address_space       = ["10.0.0.0/16"]
+  address_space       = ["10.1.0.0/16"]
 
   subnets = {
     aks = {
-      address_prefixes = ["10.0.1.0/24"]
+      address_prefixes = ["10.1.1.0/24"]
     }
     app = {
-      address_prefixes = ["10.0.2.0/24"]
+      address_prefixes = ["10.1.2.0/24"]
     }
   }
 
@@ -54,7 +54,7 @@ module "primary_aks" {
   kubernetes_version  = "1.32.5"
 
   # Node pool configuration
-  node_count          = 2 # Create 2 nodes initially for primary cluster
+  node_count          = 2              # Create 2 nodes initially for primary cluster
   node_vm_size        = "Standard_B2s" # 2 vCPU, 4GB RAM
   enable_auto_scaling = false
   # min_count           = 1
@@ -85,20 +85,12 @@ data "azuread_service_principal" "current" {
   client_id = data.azurerm_client_config.current.client_id # Use the client_id from the azurerm_client_config data source
 }
 
-# Random password for PostgreSQL admin for Azure Entra ID
-resource "random_password" "postgresql_admin_password" {
-  length  = 16
-  special = true
-}
-
 # PostgreSQL Flexible Server for each region
 resource "azurerm_postgresql_flexible_server" "primary" {
   name                = "roadmap-maker-${local.primary_region}-psql"
   location            = local.primary_region
   resource_group_name = module.resource_groups[local.primary_region].name
 
-  administrator_login    = "psqladmin"
-  administrator_password = random_password.postgresql_admin_password.result
 
   sku_name   = "B_Standard_B1ms"
   version    = "15"
@@ -145,6 +137,6 @@ resource "azurerm_postgresql_flexible_server_firewall_rule" "azure_services" {
 resource "azurerm_postgresql_flexible_server_firewall_rule" "aks_subnet" {
   name             = "AllowAKSSubnet"
   server_id        = azurerm_postgresql_flexible_server.primary.id
-  start_ip_address = "10.0.1.0"
-  end_ip_address   = "10.0.1.255"
+  start_ip_address = "10.1.1.0"
+  end_ip_address   = "10.1.1.255"
 }
