@@ -22,7 +22,7 @@ variable "kubernetes_version" {
   description = "Kubernetes version for the AKS cluster"
   type        = string
   default     = "1.32.5"
-  
+
 }
 
 variable "node_count" {
@@ -89,4 +89,10 @@ variable "vnet_subnet_id" {
   description = "Subnet ID for the AKS cluster"
   type        = string
   default     = null
+}
+
+variable "service_cidr" {
+  description = "Service CIDR for Kubernetes services"
+  type        = string
+  default     = "172.16.0.0/16"
 }
