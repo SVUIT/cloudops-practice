@@ -28,14 +28,14 @@ module "primary_network" {
   vnet_name           = "roadmap-maker-primary-vnet"
   location            = local.primary_region
   resource_group_name = module.resource_groups[local.primary_region].name
-  address_space       = ["10.1.0.0/16"]
+  address_space       = ["10.0.0.0/16"]
 
   subnets = {
     aks = {
-      address_prefixes = ["10.1.1.0/24"]
+      address_prefixes = ["10.0.1.0/24"]
     }
     app = {
-      address_prefixes = ["10.1.2.0/24"]
+      address_prefixes = ["10.0.2.0/24"]
     }
   }
 
@@ -68,6 +68,9 @@ module "primary_aks" {
   network_plugin = "azure"
   network_policy = "azure"
   vnet_subnet_id = module.primary_network.subnet_ids["aks"]
+
+  # configure service CIDR 
+  service_cidr = "172.16.0.0/16"
 
   tags = merge(local.common_tags, {
     cluster-type = "primary"
@@ -137,6 +140,6 @@ resource "azurerm_postgresql_flexible_server_firewall_rule" "azure_services" {
 resource "azurerm_postgresql_flexible_server_firewall_rule" "aks_subnet" {
   name             = "AllowAKSSubnet"
   server_id        = azurerm_postgresql_flexible_server.primary.id
-  start_ip_address = "10.1.1.0"
-  end_ip_address   = "10.1.1.255"
+  start_ip_address = "10.0.1.0"
+  end_ip_address   = "10.0.1.255"
 }

@@ -6,16 +6,16 @@ resource "azurerm_kubernetes_cluster" "default" {
   kubernetes_version  = var.kubernetes_version
 
   default_node_pool {
-    name                = "default"
-    node_count          = var.node_count
-    vm_size             = var.node_vm_size
-    min_count           = var.enable_auto_scaling ? var.min_count : null
-    max_count           = var.enable_auto_scaling ? var.max_count : null
-    max_pods            = var.max_pods
-    os_disk_size_gb     = var.os_disk_size_gb
-    type                = "VirtualMachineScaleSets"
-    vnet_subnet_id      = var.vnet_subnet_id
-    
+    name            = "default"
+    node_count      = var.node_count
+    vm_size         = var.node_vm_size
+    min_count       = var.enable_auto_scaling ? var.min_count : null
+    max_count       = var.enable_auto_scaling ? var.max_count : null
+    max_pods        = var.max_pods
+    os_disk_size_gb = var.os_disk_size_gb
+    type            = "VirtualMachineScaleSets"
+    vnet_subnet_id  = var.vnet_subnet_id
+
     tags = var.tags
   }
 
@@ -25,16 +25,17 @@ resource "azurerm_kubernetes_cluster" "default" {
   }
 
   network_profile {
-    network_plugin = var.network_plugin  # "azure"
-    network_policy = var.network_policy  # "azure"
+    network_plugin = var.network_plugin # "azure"
+    network_policy = var.network_policy # "azure"
+    service_cidr   = var.service_cidr
   }
 
   # Enable Azure Policy Add-on
   azure_policy_enabled = true
-  
+
   # Enable HTTP Application Routing (for development)
   http_application_routing_enabled = false
-  
+
   # Enable role-based access control
   role_based_access_control_enabled = true
 
