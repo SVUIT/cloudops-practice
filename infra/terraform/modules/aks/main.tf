@@ -28,6 +28,7 @@ resource "azurerm_kubernetes_cluster" "default" {
     network_plugin = var.network_plugin # "azure"
     network_policy = var.network_policy # "azure"
     service_cidr   = var.service_cidr
+    dns_service_ip     = var.dns_service_ip 
   }
 
   # Enable Azure Policy Add-on

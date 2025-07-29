@@ -69,8 +69,9 @@ module "primary_aks" {
   network_policy = "azure"
   vnet_subnet_id = module.primary_network.subnet_ids["aks"]
 
-  # configure service CIDR 
-  service_cidr = "172.16.0.0/16"
+  # configure service CIDR to avoid conflicts with app subnet
+  service_cidr   = "172.16.0.0/16"
+  dns_service_ip = "172.16.0.10"
 
   tags = merge(local.common_tags, {
     cluster-type = "primary"
@@ -93,9 +94,9 @@ resource "azurerm_postgresql_flexible_server" "primary" {
   name                = "roadmap-maker-${local.primary_region}-psql"
   location            = local.primary_region
   resource_group_name = module.resource_groups[local.primary_region].name
+  zone = "2"
 
-
-  sku_name   = "B_Standard_B1ms"
+  sku_name   = "B_Standard_B1ms"  
   version    = "15"
   storage_mb = 32768 # 32GB
 
