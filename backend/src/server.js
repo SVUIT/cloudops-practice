@@ -1,12 +1,18 @@
 // src/server.js
 require('dotenv').config();
 const express = require("express");
+const cors = require("cors");
 const boardRoutes = require("./routes/boardRoutes");
 const cardRoutes = require("./routes/cardRoutes");
 const setupSwagger = require("./swagger");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+app.use(cors({
+  origin: "https://vigilant-enigma-q7pw94xx644rf647w-5173.app.github.dev",
+  credentials: true,
+}));
 
 // Middleware to parse JSON
 app.use(express.json());
