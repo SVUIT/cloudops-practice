@@ -1,37 +1,52 @@
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import PlusIcon from "../icons/PlusIcon";
-import type { Board, Id, Task } from "../types";
+import type { Board, Card } from "../types";
 import BoardContainer from "./BoardContainer";
-import {
-  DndContext,
-  DragOverlay,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type DragOverEvent,
-  type DragStartEvent,
-} from "@dnd-kit/core";
-import { arrayMove, SortableContext } from "@dnd-kit/sortable";
-import { createPortal } from "react-dom";
-import TaskCard from "./TaskCard";
+import { fetchBoards } from "../api/boardApi";
+import { fetchCards } from "../api/cardApi";
 
 function KanbanBoard() {
   const [boards, setBoards] = useState<Board[]>([]);
-  const boardsId = useMemo(() => boards.map((b) => b.id), [boards]);
+  const [cards, setCards] = useState<Card[]>([]);
 
-  const [tasks, setTasks] = useState<Task[]>([]);
+  useEffect(() => {
+    fetchBoards().then(setBoards);
+  }, []);
 
-  const [activeBoard, setActiveBoard] = useState<Board | null>(null);
-  const [activeTask, setActiveTask] = useState<Task | null>(null);
+  useEffect(() => {
+    if (boards.length > 0) {
+      fetchCards().then(setCards);
+    }
+  }, [boards]);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 3,
-      },
-    })
-  );
+const boardsId = useMemo(() => {
+  return Array.isArray(boards) ? boards.map((b) => b.id) : [];
+}, [boards]);
+
+  function createNewBoard() {
+    // Implement API call to create board
+  }
+
+  function deleteBoard(id: string) {
+    setBoards(boards.filter((b) => b.id !== id));
+    setCards(cards.filter((c) => c.boardId !== id));
+  }
+
+  function updateBoard(id: string, title: string) {
+    setBoards(boards.map((b) => b.id === id ? { ...b, title } : b));
+  }
+
+  function createCard(boardId: string, card: Partial<Card>) {
+    // Implement API call to create card
+  }
+
+  function deleteCard(id: string) {
+    setCards(cards.filter((c) => c.id !== id));
+  }
+
+  function updateCard(id: string, card: Partial<Card>) {
+    setCards(cards.map((c) => c.id === id ? { ...c, ...card } : c));
+  }
 
   return (
     <div className="w-full px-10 py-6 bg-[#18181b] min-h-screen">
@@ -46,178 +61,22 @@ function KanbanBoard() {
           </button>
         </h1>
       </div>
-
-      <DndContext
-        sensors={sensors}
-        onDragStart={onDragStart}
-        onDragEnd={onDragEnd}
-        onDragOver={onDragOver}
-      >
-        <div className="bg-[#23232a] border border-gray-700 rounded-xl shadow-md p-6 overflow-x-auto w-full">
-          <div className="flex gap-4">
-            <SortableContext items={boardsId}>
-              {boards.map((board) => (
-                <BoardContainer
-                  key={board.id}
-                  board={board}
-                  deleteBoard={deleteBoard}
-                  updateBoard={updateBoard}
-                  createTask={createTask}
-                  deleteTask={deleteTask}
-                  updateTask={updateTask}
-                  tasks={tasks.filter((task) => task.boardId === board.id)}
-                />
-              ))}
-            </SortableContext>
-          </div>
-        </div>
-
-        {createPortal(
-          <DragOverlay>
-            {activeBoard && (
-              <BoardContainer
-                board={activeBoard}
-                deleteBoard={deleteBoard}
-                updateBoard={updateBoard}
-                createTask={createTask}
-                deleteTask={deleteTask}
-                updateTask={updateTask}
-                tasks={tasks.filter((task) => task.boardId === activeBoard.id)}
-              />
-            )}
-            {activeTask && (
-              <TaskCard
-                task={activeTask}
-                deleteTask={deleteTask}
-                updateTask={updateTask}
-              />
-            )}
-          </DragOverlay>,
-          document.body
-        )}
-      </DndContext>
+      <div className="flex gap-4">
+        {boards.map((board) => (
+          <BoardContainer
+            key={board.id}
+            board={board}
+            deleteBoard={deleteBoard}
+            updateBoard={updateBoard}
+            createCard={createCard}
+            deleteCard={deleteCard}
+            updateCard={updateCard}
+            cards={cards.filter((card) => card.boardId === board.id)}
+          />
+        ))}
+      </div>
     </div>
   );
-
-  function createTask(boardId: Id, content?: string) {
-    const newTask: Task = {
-      id: generateId(),
-      boardId,
-      content: content ?? `Task ${tasks.length + 1}`,
-    };
-
-    setTasks([...tasks, newTask]);
-  }
-
-  function deleteTask(id: Id) {
-    const newTasks = tasks.filter((task) => task.id !== id);
-    setTasks(newTasks);
-  }
-
-  function updateTask(id: Id, content: string) {
-    const newTasks = tasks.map((task) => {
-      if (task.id !== id) return task;
-      return { ...task, content };
-    });
-
-    setTasks(newTasks);
-  }
-
-  function createNewBoard() {
-    const boardToAdd: Board = {
-      id: generateId(),
-      title: `Board ${boards.length + 1}`,
-    };
-
-    setBoards([...boards, boardToAdd]);
-  }
-
-  function deleteBoard(id: Id) {
-    const filteredBoards = boards.filter((b) => b.id !== id);
-    setBoards(filteredBoards);
-
-    const newTasks = tasks.filter((t) => t.boardId !== id);
-    setTasks(newTasks);
-  }
-
-  function updateBoard(id: Id, title: string) {
-    const newBoards = boards.map((b) => {
-      if (b.id !== id) return b;
-      return { ...b, title };
-    });
-
-    setBoards(newBoards);
-  }
-
-  function onDragStart(event: DragStartEvent) {
-    if (event.active.data.current?.type === "Board") {
-      setActiveBoard(event.active.data.current.board);
-      return;
-    }
-
-    if (event.active.data.current?.type === "Task") {
-      setActiveTask(event.active.data.current.task);
-      return;
-    }
-  }
-
-  function onDragEnd(event: DragEndEvent) {
-    setActiveBoard(null);
-    setActiveTask(null);
-
-    const { active, over } = event;
-    if (!over) return;
-
-    const activeBoardId = active.id;
-    const overBoardId = over.id;
-
-    if (activeBoardId === overBoardId) return;
-
-    setBoards((boards) => {
-      const activeBoardIndex = boards.findIndex((b) => b.id === activeBoardId);
-      const overBoardIndex = boards.findIndex((b) => b.id === overBoardId);
-      return arrayMove(boards, activeBoardIndex, overBoardIndex);
-    });
-  }
-
-  function onDragOver(event: DragOverEvent) {
-    const { active, over } = event;
-    if (!over) return;
-
-    const activeId = active.id;
-    const overId = over.id;
-
-    if (activeId === overId) return;
-
-    const isActiveTask = active.data.current?.type === "Task";
-    const isOverTask = over.data.current?.type === "Task";
-
-    if (!isActiveTask) return;
-
-    if (isActiveTask && isOverTask) {
-      setTasks((tasks) => {
-        const activeIndex = tasks.findIndex((t) => t.id === activeId);
-        const overIndex = tasks.findIndex((t) => t.id === overId);
-
-        tasks[activeIndex].boardId = tasks[overIndex].boardId;
-        return arrayMove(tasks, activeIndex, overIndex);
-      });
-    }
-
-    const isOverABoard = over.data.current?.type === "Board";
-
-    if (isActiveTask && isOverABoard) {
-      setTasks((tasks) => {
-        const activeIndex = tasks.findIndex((t) => t.id === activeId);
-        tasks[activeIndex].boardId = overId;
-        return arrayMove(tasks, activeIndex, activeIndex);
-      });
-    }
-  }
-}
-
-function generateId() {
-  return Math.floor(Math.random() * 1001);
 }
 
 export default KanbanBoard;

@@ -1,274 +1,173 @@
-import { SortableContext, useSortable } from "@dnd-kit/sortable";
-import TrashIcon from "../icons/TrashIcon";
-import type { Board, Id, Task } from "../types";
-import { CSS } from "@dnd-kit/utilities";
-import { useMemo, useState } from "react";
 import PlusIcon from "../icons/PlusIcon";
+import TrashIcon from "../icons/TrashIcon";
+import type { Board, Card } from "../types";
 import TaskCard from "./TaskCard";
+import { useState, useMemo } from "react";
 
-interface Props{
-    board: Board;
-    deleteBoard: (id: Id) => void;
-    updateBoard: (id: Id, title: string) => void;
-
-    createTask: (boardId: Id, content?: string) => void;
-    updateTask: (id: Id, content: string) => void;
-    deleteTask: (id: Id) => void;
-    tasks: Task[];
+interface Props {
+  board: Board;
+  deleteBoard: (id: string) => void;
+  updateBoard: (id: string, title: string) => void;
+  createCard: (boardId: string, card: Partial<Card>) => void;
+  deleteCard: (id: string) => void;
+  updateCard: (id: string, card: Partial<Card>) => void;
+  cards: Card[];
 }
 
 function BoardContainer(props: Props) {
-    const { 
-        board, 
-        deleteBoard, 
-        updateBoard, 
-        createTask, 
-        tasks, 
-        deleteTask, 
-        updateTask 
-    } = props;
+  const { board, deleteBoard, updateBoard, createCard, deleteCard, updateCard, cards } = props;
+  const [editMode, setEditMode] = useState(false);
+  const [showCardForm, setShowCardForm] = useState(false);
+  const [formData, setFormData] = useState({
+    content: "",
+    description: "",
+    order: cards.length + 1,
+    subjectName: "",
+    semester: "",
+    typeSubject: "",
+    dueDate: "",
+    labels: "",
+  });
 
-    const [editMode, setEditMode] = useState(false);
+  const cardsIds = useMemo(() => cards.map((card) => card.id), [cards]);
 
-    const [showTaskForm, setShowTaskForm] = useState(false);
-
-    const [formData, setFormData] = useState({
-        subjectName: "",
-        semester: "",
-        subjectType: ""
-    });
-
-    const tasksIds = useMemo(() => {
-        return tasks.map((task) => task.id);
-    }, [tasks]);
-
-    const { 
-        setNodeRef, 
-        attributes, 
-        listeners, 
-        transform, 
-        transition, 
-        isDragging 
-    } = useSortable({
-            id: board.id,
-            data: {
-                type: "Board",
-                board,
-            },
-            disabled: editMode,
-        });
-
-    const style = {
-        transition,
-        transform: CSS.Transform.toString(transform),
-    };
-
-    if (isDragging) {
-        return (
-            <div 
-                ref={setNodeRef} 
-                style={style}
-                className="
-                    bg-gray-200
-                    opacity-60
-                    border-2
-                    border-gray-400
-                    w-[350px]
-                    h-[500px]
-                    max-h-[500px]
-                    rounded-xl
-                    flex
-                    flex-col
-            "
-            >
-
-            </div>
-        );
-    }
-
-    return (
-        <div
-            ref={setNodeRef}
-            style={style}
-            className="
-                bg-[#2E2E36] 
-                border border-[#4A515B]
-                w-[350px]
-                h-[500px]
-                max-h-[500px]
-                flex
-                flex-col
-                rounded-xl 
-                shadow-lg 
-                dark:shadow-black/40
-            "
-        >
-        {/* Board title */}
-        <div 
-            {...attributes}
-            {...listeners}
-            onClick={() => {
-                setEditMode(true);
-            }}
-        
-            className="
-                bg-[#23232a]
-                h-[60px]
-                cursor-grab
-                rounded-md
-                rounded-xl
-                p-3
-                text-md
-                font-bold
-                flex
-                items-center
-                justify-between
-        ">
-            <div className="flex gap-2">
-                <div
-                    className="
-                        flex
-                        justify-center
-                        items-center
-                        bg-gray-700
-                        px-2
-                        py-1
-                        text-sm
-                        rounded-full
-                        text-white
-                    "
-                >
-                    {tasks.length}
-                </div>
-
-                {!editMode && board.title}
-                {editMode && (
-                    <input 
-                        className="bg-black focus:border-rose-500 border rounded outline-none px-2"
-                        value={board.title}
-                        onChange={(e) => updateBoard(board.id, e.target.value)}
-                        autoFocus
-                        onBlur={() => {
-                            setEditMode(false);
-                        }}
-                        onKeyDown={(e) => {
-                            if (e.key !== "Enter") return;
-                            setEditMode(false);
-                        }}
-                    />
-                )}
-            </div>
-            <button
-                onClick={() => {
-                    deleteBoard(board.id);
-                }}
-                className="
-                    stroke-gray-200
-                    hover:stroke-white
-                    hover:bg-gray-200
-                    rounded
-                    px-1
-                    py-2
-                "
-            >
-                <TrashIcon />
-            </button>
+  return (
+    <div className="bg-[#2E2E36] border border-[#4A515B] w-[350px] h-[500px] flex flex-col rounded-xl shadow-lg">
+      <div
+        className="bg-[#23232a] h-[60px] cursor-grab rounded-xl p-3 text-md font-bold flex items-center justify-between"
+        onClick={() => setEditMode(true)}
+      >
+        <div className="flex gap-2">
+          <div className="flex justify-center items-center bg-gray-700 px-2 py-1 text-sm rounded-full text-white">
+            {cards.length}
+          </div>
+          {!editMode && board.title}
+          {editMode && (
+            <input
+              className="bg-black focus:border-rose-500 border rounded outline-none px-2"
+              value={board.title}
+              onChange={(e) => updateBoard(board.id, e.target.value)}
+              autoFocus
+              onBlur={() => setEditMode(false)}
+              onKeyDown={(e) => {
+                if (e.key !== "Enter") return;
+                setEditMode(false);
+              }}
+            />
+          )}
         </div>
-        {/* Board task container */}
-        <div className="flex flex-grow flex-col gap-4 p-2 overflow-x-hidden overflow-y-auto">
-            <SortableContext items={tasksIds}>
-                {tasks.map((task) => (
-                    <TaskCard 
-                        key={task.id} 
-                        task={task} 
-                        deleteTask={deleteTask} 
-                        updateTask={updateTask}
-                        />
-                ))} 
-            </SortableContext>
-
-            {showTaskForm && (
-                <div className="fixed inset-0 bg-white/30 flex justify-center items-center z-50">
-                    <div className="bg-[#2E2E36] p-6 rounded-xl shadow-lg w-[90%] max-w-md space-y-4">
-                        <h2 className="text-xl font-semibold text-center text-black">Add New Task</h2>
-
-                        <input
-                            type="text"
-                            placeholder="Subject Name"
-                            className="w-full p-2 border rounded text-black"
-                            value={formData.subjectName}
-                            onChange={(e) =>
-                                setFormData({ ...formData, subjectName: e.target.value })
-                            }
-                        />
-
-                        <select
-                            className="w-full p-2 border rounded text-black"
-                            value={formData.semester}
-                            onChange={(e) =>
-                                setFormData({ ...formData, semester: e.target.value })
-                            }
-                        >
-                            <option value="">Select Semester</option>
-                            <option value="Semester 1">Semester 1</option>
-                            <option value="Semester 2">Semester 2</option>
-                        </select>
-
-                        <select
-                            className="w-full p-2 border rounded text-black"
-                            value={formData.subjectType}
-                            onChange={(e) =>
-                                setFormData({ ...formData, subjectType: e.target.value })
-                            }
-                        >
-                            <option value="">Select Type</option>
-                            <option value="Core">a</option>
-                            <option value="Elective">b</option>
-                        </select>
-
-                        <div className="flex justify-end gap-2 pt-2">
-                            <button
-                                className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400"
-                                onClick={() => setShowTaskForm(false)}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2"
-                                onClick={() => {
-                                    const content = `${formData.subjectName}\nSemester: ${formData.semester}\nType: ${formData.subjectType}`;
-                                    createTask(board.id, content);
-                                    setFormData({
-                                        subjectName: "",
-                                        semester: "",
-                                        subjectType: ""
-                                    });
-                                    setShowTaskForm(false);
-                                }}
-                            >
-                                Save
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-        </div>
-        {/* Board footer */}
         <button
-            className="text-black flex gap-2 items-center 
-                border-gray-50 border-2 rounded-md p-4
-                border-x-gray-50
-                hover:bg-gray-600 hover:text-white
-                active:bg-black"
-            onClick={() => setShowTaskForm(true)}
+          onClick={() => deleteBoard(board.id)}
+          className="stroke-gray-200 hover:stroke-white hover:bg-gray-200 rounded px-1 py-2"
         >
-            <PlusIcon />
-            Add task
+          <TrashIcon />
         </button>
-
+      </div>
+      <div className="flex flex-grow flex-col gap-4 p-2 overflow-x-hidden overflow-y-auto">
+        {cards.map((card) => (
+          <TaskCard
+            key={card.id}
+            card={card}
+            deleteCard={deleteCard}
+            updateCard={updateCard}
+          />
+        ))}
+        {showCardForm && (
+          <div className="fixed inset-0 bg-white/30 flex justify-center items-center z-50">
+            <div className="bg-[#2E2E36] p-6 rounded-xl shadow-lg w-[90%] max-w-md space-y-4">
+              <h2 className="text-xl font-semibold text-center text-black">Add New Card</h2>
+              <input
+                type="text"
+                placeholder="Content"
+                className="w-full p-2 border rounded text-black"
+                value={formData.content}
+                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+              />
+              <input
+                type="text"
+                placeholder="Description"
+                className="w-full p-2 border rounded text-black"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              />
+              <input
+                type="text"
+                placeholder="Subject Name"
+                className="w-full p-2 border rounded text-black"
+                value={formData.subjectName}
+                onChange={(e) => setFormData({ ...formData, subjectName: e.target.value })}
+              />
+              <input
+                type="text"
+                placeholder="Semester"
+                className="w-full p-2 border rounded text-black"
+                value={formData.semester}
+                onChange={(e) => setFormData({ ...formData, semester: e.target.value })}
+              />
+              <input
+                type="text"
+                placeholder="Type Subject"
+                className="w-full p-2 border rounded text-black"
+                value={formData.typeSubject}
+                onChange={(e) => setFormData({ ...formData, typeSubject: e.target.value })}
+              />
+              <input
+                type="date"
+                className="w-full p-2 border rounded text-black"
+                value={formData.dueDate}
+                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+              />
+              <input
+                type="text"
+                placeholder="Labels (comma separated)"
+                className="w-full p-2 border rounded text-black"
+                value={formData.labels}
+                onChange={(e) => setFormData({ ...formData, labels: e.target.value })}
+              />
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400"
+                  onClick={() => setShowCardForm(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2"
+                  onClick={() => {
+                    createCard(board.id, {
+                      ...formData,
+                      labels: formData.labels.split(",").map((l) => l.trim()),
+                      order: cards.length + 1,
+                    });
+                    setFormData({
+                      content: "",
+                      description: "",
+                      order: cards.length + 2,
+                      subjectName: "",
+                      semester: "",
+                      typeSubject: "",
+                      dueDate: "",
+                      labels: "",
+                    });
+                    setShowCardForm(false);
+                  }}
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      <button
+        className="text-black flex gap-2 items-center border-gray-50 border-2 rounded-md p-4 hover:bg-gray-600 hover:text-white active:bg-black"
+        onClick={() => setShowCardForm(true)}
+      >
+        <PlusIcon />
+        Add card
+      </button>
     </div>
-    );
+  );
 }
 
 export default BoardContainer;
