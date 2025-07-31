@@ -96,3 +96,9 @@ variable "service_cidr" {
   type        = string
   default     = "172.16.0.0/16"
 }
+
+variable "dns_service_ip" {
+  description = "DNS service IP address"
+  type        = string
+  default     = "172.16.0.10"
+}
