@@ -1,17 +1,19 @@
 export type Id = string;
 
+// types.ts
+
 export interface Board {
-  id: Id;
+  id: string;
   title: string;
   order: number;
-  isDeleted?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Card {
-  id: Id;
-  boardId: Id;
+  id: string;
+  boardId: string;
   content: string;
   description?: string;
   order: number;
@@ -19,9 +21,9 @@ export interface Card {
   semester: string;
   typeSubject: string;
   dueDate?: string;
-  isArchived?: boolean;
-  labels?: string[];
-  createdAt?: string;
-  updatedAt?: string;
-  isDeleted?: boolean;
+  isArchived: boolean;
+  labels: string[];
+  createdAt: string;
+  updatedAt: string;
+  isDeleted: boolean;
 }

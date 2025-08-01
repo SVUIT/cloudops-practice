@@ -2,33 +2,14 @@ import type { Card } from "../types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-export async function fetchCardsByBoard(boardId: string): Promise<Card[]> {
-  const response = await fetch(`${API_BASE_URL}/cards/board/${boardId}`);
-  if (!response.ok) throw new Error("Failed to fetch cards");
-  return response.json();
-}
-
 export async function fetchCards(): Promise<Card[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/cards`, {
+    const res = await fetch(`${API_BASE_URL}/cards`, {
       method: "GET",
       credentials: "include",
     });
-
-    if (!response.ok) {
-      console.error("Fetch cards failed:", response.status);
-      throw new Error("Failed to fetch cards");
-    }
-
-    const responseData = await response.json();
-    const data = responseData.data; 
-
-    if (!Array.isArray(data)) {
-      console.error("Expected card array, got:", responseData);
-      throw new Error("Invalid response format for cards");
-    }
-
-    return data;
+    const json = await res.json();
+    return Array.isArray(json.data) ? json.data : [];
   } catch (error) {
     console.error("Error fetching cards:", error);
     return [];
@@ -36,28 +17,91 @@ export async function fetchCards(): Promise<Card[]> {
 }
 
 export async function createCard(data: Partial<Card>): Promise<Card> {
-  const response = await fetch(`${API_BASE_URL}/cards`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) throw new Error("Failed to create card");
-  return response.json();
+  console.log("Creating card with data:", data);
+
+  const cleanData = {
+    ...data,
+    dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
+  };
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/cards`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify(cleanData),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error("Server error:", res.status, errorText);
+      throw new Error(`Failed to create card: ${res.status}`);
+    }
+
+    return await res.json();
+  } catch (err) {
+    console.error("Error creating card:", err);
+    throw err;
+  }
 }
 
 export async function updateCard(id: string, data: Partial<Card>): Promise<Card> {
-  const response = await fetch(`${API_BASE_URL}/cards/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) throw new Error("Failed to update card");
-  return response.json();
+  console.log("Updating card with id:", id, "and data:", data);
+
+  const cleanData: any = {
+    ...data,
+    dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
+  };
+
+  if (cleanData.boardId) {
+    cleanData.board = { connect: { id: cleanData.boardId } };
+    delete cleanData.boardId;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/cards/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify(cleanData),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error("Server error:", res.status, errorText);
+      throw new Error(`Failed to update card: ${res.status}`);
+    }
+
+    return await res.json();
+  } catch (err) {
+    console.error("Error updating card:", err);
+    throw err;
+  }
 }
 
 export async function deleteCard(id: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/cards/${id}`, {
-    method: "DELETE",
-  });
-  if (!response.ok) throw new Error("Failed to delete card");
+  console.log("Deleting card with id:", id); // ✅ log id
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/cards/${id}`, {
+      method: "DELETE",
+    });
+
+    console.log("Response status:", response.status); // ✅ log HTTP status
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Delete failed:", errorText);
+      throw new Error(`Failed to delete card: ${response.status}`);
+    }
+
+    console.log("Card deleted successfully."); // ✅ log success
+  } catch (err) {
+    console.error("Error deleting card:", err);
+    throw err;
+  }
 }

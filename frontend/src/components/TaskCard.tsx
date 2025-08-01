@@ -1,89 +1,129 @@
+//TaskCard.tsx
+
 import { useState } from "react";
 import TrashIcon from "../icons/TrashIcon";
 import type { Card } from "../types";
 
 interface Props {
   card: Card;
-  deleteCard: (id: string) => void;
-  updateCard: (id: string, card: Partial<Card>) => void;
+  deleteCard: (id: string) => Promise<void>;
+  updateCard: (id: string, card: Partial<Card>) => Promise<void>;
 }
 
 function TaskCard({ card, deleteCard, updateCard }: Props) {
   const [editMode, setEditMode] = useState(false);
+  const [localCard, setLocalCard] = useState<Card>(card);
+
+  // Sync localCard if prop changes (optional)
+  // You can add useEffect if cards update from parent
+
+  function handleChange(field: keyof Card, value: any) {
+    setLocalCard((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function handleSave() {
+    try {
+      await updateCard(card.id, localCard);
+      setEditMode(false);
+    } catch (error) {
+      console.error("Update card failed:", error);
+      alert("Failed to update card");
+    }
+  }
 
   if (editMode) {
     return (
       <div className="bg-gray-800 p-2.5 min-h-[120px] flex flex-col rounded-xl hover:ring-2 hover:ring-inset hover:ring-rose-500 cursor-grab relative">
         <textarea
           className="mb-2 h-[40px] w-full resize-none border-none rounded bg-transparent text-white focus:outline-none"
-          value={card.content}
+          value={localCard.content}
           autoFocus
           placeholder="Content"
-          onBlur={() => setEditMode(false)}
-          onChange={(e) => updateCard(card.id, { content: e.target.value })}
+          onChange={(e) => handleChange("content", e.target.value)}
         />
         <textarea
           className="mb-2 h-[40px] w-full resize-none border-none rounded bg-transparent text-white focus:outline-none"
-          value={card.description ?? ""}
+          value={localCard.description ?? ""}
           placeholder="Description"
-          onChange={(e) => updateCard(card.id, { description: e.target.value })}
+          onChange={(e) => handleChange("description", e.target.value)}
         />
         <input
           type="text"
           className="mb-2 w-full border rounded bg-transparent text-white focus:outline-none"
-          value={card.subjectName}
+          value={localCard.subjectName}
           placeholder="Subject Name"
-          onChange={(e) => updateCard(card.id, { subjectName: e.target.value })}
+          onChange={(e) => handleChange("subjectName", e.target.value)}
         />
         <input
           type="text"
           className="mb-2 w-full border rounded bg-transparent text-white focus:outline-none"
-          value={card.semester}
+          value={localCard.semester}
           placeholder="Semester"
-          onChange={(e) => updateCard(card.id, { semester: e.target.value })}
+          onChange={(e) => handleChange("semester", e.target.value)}
         />
         <input
           type="text"
           className="mb-2 w-full border rounded bg-transparent text-white focus:outline-none"
-          value={card.typeSubject}
+          value={localCard.typeSubject}
           placeholder="Type Subject"
-          onChange={(e) => updateCard(card.id, { typeSubject: e.target.value })}
+          onChange={(e) => handleChange("typeSubject", e.target.value)}
         />
         <input
           type="date"
           className="mb-2 w-full border rounded bg-transparent text-white focus:outline-none"
-          value={card.dueDate ? card.dueDate.substring(0, 10) : ""}
-          onChange={(e) => updateCard(card.id, { dueDate: e.target.value })}
+          value={localCard.dueDate ? localCard.dueDate.substring(0, 10) : ""}
+          onChange={(e) => handleChange("dueDate", e.target.value)}
         />
         <input
           type="text"
           className="mb-2 w-full border rounded bg-transparent text-white focus:outline-none"
-          value={card.labels?.join(", ")}
+          value={localCard.labels?.join(", ") ?? ""}
           placeholder="Labels"
-          onChange={(e) => updateCard(card.id, { labels: e.target.value.split(",").map((l) => l.trim()) })}
+          onChange={(e) =>
+            handleChange(
+              "labels",
+              e.target.value
+                .split(",")
+                .map((l) => l.trim())
+                .filter((l) => l.length > 0)
+            )
+          }
         />
-        <button
-          className="stroke-white bg-gray-500 p-2 rounded opacity-60 hover:opacity-100"
-          onClick={() => setEditMode(false)}
-        >
-          Done
-        </button>
+        <div className="flex justify-between">
+          <button
+            className="stroke-white bg-gray-500 p-2 rounded opacity-60 hover:opacity-100"
+            onClick={handleSave}
+          >
+            Done
+          </button>
+          <button
+            className="stroke-white bg-red-600 p-2 rounded opacity-60 hover:opacity-100"
+            onClick={() => {
+              setEditMode(false);
+              setLocalCard(card); // revert changes
+            }}
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
     <div
-      className="bg-[#23232a] p-2.5 min-h-[120px] flex flex-col rounded-xl hover:ring-2 hover:ring-inset hover:ring-rose-500 cursor-grab relative"
+      className="bg-[#23232a] p-2.5 min-h-[120px] flex flex-col rounded-xl hover:ring-2 hover:ring-inset hover:ring-rose-500 cursor-pointer relative"
       onClick={() => setEditMode(true)}
     >
-      <p className="font-bold">{card.content}</p>
-      <p>{card.description}</p>
-      <p>Subject: {card.subjectName}</p>
-      <p>Semester: {card.semester}</p>
-      <p>Type: {card.typeSubject}</p>
-      <p>Due: {card.dueDate ? card.dueDate.substring(0, 10) : "N/A"}</p>
-      <p>Labels: {card.labels?.join(", ")}</p>
+      <p className="font-bold text-white">{card.content}</p>
+      <p className="text-gray-300">{card.description}</p>
+      <p className="text-gray-400">Subject: {card.subjectName}</p>
+      <p className="text-gray-400">Semester: {card.semester}</p>
+      <p className="text-gray-400">Type: {card.typeSubject}</p>
+      <p className="text-gray-400">
+        Due: {card.dueDate ? card.dueDate.substring(0, 10) : "N/A"}
+      </p>
+      <p className="text-gray-400">Labels: {card.labels?.join(", ")}</p>
       <div className="absolute right-4 top-2 flex gap-2">
         <button
           onClick={(e) => {
@@ -91,12 +131,17 @@ function TaskCard({ card, deleteCard, updateCard }: Props) {
             setEditMode(true);
           }}
           className="stroke-white bg-gray-500 p-2 rounded opacity-60 hover:opacity-100"
+          aria-label="Edit Card"
         >
           Edit
         </button>
         <button
-          onClick={() => deleteCard(card.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            deleteCard(card.id);
+          }}
           className="stroke-white bg-gray-500 p-2 rounded opacity-60 hover:opacity-100"
+          aria-label="Delete Card"
         >
           <TrashIcon />
         </button>
