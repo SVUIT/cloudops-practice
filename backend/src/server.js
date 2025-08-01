@@ -10,25 +10,22 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors({
-  origin: "https://vigilant-enigma-q7pw94xx644rf647w-5173.app.github.dev",
-  credentials: true,
+  origin: (origin, callback) => callback(null, origin), // Cho mọi domain
+  credentials: true, // Cho phép gửi cookie, header
 }));
 
-// Middleware to parse JSON
 app.use(express.json());
 
-// Swagger docs
 setupSwagger(app);
 
-app.get('/', (req, res) => {
-  res.redirect('/api-docs');
+app.get("/", (req, res) => {
+  res.redirect("/api-docs");
 });
-// Register routes
-app.use("/boards", boardRoutes);
-app.use("/cards", cardRoutes)
 
-// Start server
+app.use("/boards", boardRoutes);
+app.use("/cards", cardRoutes);
+
+// ✅ Start server
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-
