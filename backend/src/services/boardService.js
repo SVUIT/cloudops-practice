@@ -6,7 +6,7 @@ const getAllBoards = async () => {
     return await prisma.board.findMany({
       where: { isDeleted: false },
       include: {
-        tasks: {
+        cards: {
           where: {
             isArchived: false,
             isDeleted: false
