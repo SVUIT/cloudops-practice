@@ -14,6 +14,7 @@ permissions:
 
 env:
   TF_TOKEN_app_terraform_io: ${{ secrets.HCP_API }}
+  TF_WORKSPACE_NAME: ${{ github.event_name == 'pull_request' && format('dev-preview-{0}', github.event.pull_request.number) || 'production' }}
 
 jobs:
   filter: 
@@ -54,6 +55,12 @@ jobs:
         id: init
         working-directory: infra/terraform
         run: terraform init
+      
+      - name: Select or Create Workspace
+        working-directory: infra/terraform
+        run: |
+          terraform workspace list
+          terraform workspace select "$TF_WORKSPACE_NAME" || terraform workspace new "$TF_WORKSPACE_NAME"
 
       - name: Terraform Validate
         id: validate
@@ -121,7 +128,14 @@ jobs:
               core.setFailed("Terraform plan failed.");
             }
 
-      - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      - name: Terraform Apply (Dev)
+        if: github.event_name == 'pull_request'
         working-directory: infra/terraform
         run: terraform apply -auto-approve
+
+      - name: Terraform Apply (Prod)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        working-directory: infra/terraform
+        run: |
+          terraform workspace select production || terraform workspace new production
+          terraform apply -auto-approve
