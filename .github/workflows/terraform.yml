@@ -16,13 +16,30 @@ env:
   TF_TOKEN_app_terraform_io: ${{ secrets.HCP_API }}
 
 jobs:
+  filter: 
+    runs-on: ubuntu-latest
+    outputs:
+      infra: ${{ steps.filter.outputs.infra }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Filter paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            infra:
+              - 'infra/**'
+
   terraform:
     name: Terraform plan & apply
+    needs: filter
+    if: needs.filter.outputs.infra == 'true'
     runs-on: ubuntu-latest
 
     concurrency: 
-      group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      group: terraform-apply
+      cancel-in-progress: false
 
     steps:
       - name: Checkout source
