@@ -1,0 +1,56 @@
+name: Manage Azure Services
+
+on:
+  schedule:
+    - cron: '0 18 * * *'   # 1 AM UTC = 8 AM VN (STOP)
+    - cron: '0 0 * * *'   # 7 AM VN (START) = 0 AM UTC
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Start or Stop services'
+        required: true
+        default: 'start'
+        type: choice
+        options:
+          - start
+          - stop
+
+jobs:
+  manage:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: scripts
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Determine action
+      id: determine
+      run: |
+        echo "==> Determining action..."
+        if [[ "${{ github.event_name }}" == "schedule" ]]; then
+          if [[ "${{ github.event.schedule }}" == '0 0 * * *' ]]; then
+            echo "action=start" >> "$GITHUB_OUTPUT"
+          else 
+            echo "action=stop" >> "$GITHUB_OUTPUT"
+          fi 
+        else 
+          echo "action=${{ github.event.inputs.action }}" >> "$GITHUB_OUTPUT"
+        fi
+    - name: Graceful Stop Services
+      if: steps.determine.outputs.action == 'stop'
+      run: |
+        chmod +x stop.sh
+        ./stop.sh
+    - name: Start Services
+      if: steps.determine.outputs.action == 'start'
+      run: |
+        chmod +x start.sh
+        ./start.sh
+
