@@ -18,6 +18,7 @@ model Board {
   id        String   @id @default(uuid())
   title     String
   order     Int
+  color   String?
   isDeleted Boolean  @default(false) @map("is_deleted")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -36,7 +37,7 @@ model Card {
   order        Int
   subjectName  String    @map("subject_name")
   semester     String
-  typeSubject  String    @map("type_subject")
+  typeSubject  String?    @map("type_subject")
   dueDate      DateTime? @map("due_date")
   isArchived   Boolean   @default(false) @map("is_archived")
   labels       String[]  @default([])

@@ -1,208 +1,198 @@
-//BoardContainer.tsx
-
-import PlusIcon from "../icons/PlusIcon";
-import TrashIcon from "../icons/TrashIcon";
 import type { Board, Card } from "../types";
 import TaskCard from "./TaskCard";
-import { useState, useMemo } from "react";
+import { useState } from "react";
+import { useSortable } from "@dnd-kit/sortable";
+import CardFormModal from "./CardFormModal";
+import AddCardButton from "./AddCardButton"; // thêm ở phần import đầu file
+import BoardOptionsIcon from "./BoardOptionsIcon";
+import { CSS } from "@dnd-kit/utilities";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 
 interface Props {
   board: Board;
+  cards: Card[];
   deleteBoard: (id: string) => Promise<void>;
-  updateBoard: (id: string, title: string) => Promise<void>;
-  createCard: (boardId: string, card: Partial<Card>) => Promise<Card | undefined>;
+  updateBoard: (id: string, data: { title: string; order: number }) => Promise<void>;
+  createCard: (boardId: string, card: Partial<Card>) => Promise<void>;
   deleteCard: (id: string) => Promise<void>;
   updateCard: (id: string, card: Partial<Card>) => Promise<void>;
-  cards: Card[];
+  fetchCards: () => Promise<void>;
+  maxCards: number;
+  
 }
 
-function BoardContainer(props: Props) {
-  const { board, deleteBoard, updateBoard, createCard, deleteCard, updateCard, cards } = props;
-
+function BoardContainer({
+  board,
+  cards,
+  deleteBoard,
+  updateBoard,
+  createCard,
+  deleteCard,
+  updateCard,
+  fetchCards,
+  maxCards,
+}: Props) {
+const selectedColor = board.color || "#1F1D29";
   const [editMode, setEditMode] = useState(false);
   const [showCardForm, setShowCardForm] = useState(false);
+  const [editingCard, setEditingCard] = useState<Card | null>(null);
   const [formData, setFormData] = useState({
     content: "",
-    description: "",
     subjectName: "",
     semester: "",
-    typeSubject: "",
-    dueDate: "",
-    labels: "",
   });
+  const [, setShowDropdown] = useState(false);
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: board.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    minHeight: maxCards * 140 + 170,
+  };
 
   const cardsCount = cards.length;
 
-  // Reset form data
   function resetForm() {
     setFormData({
       content: "",
-      description: "",
       subjectName: "",
       semester: "",
-      typeSubject: "",
-      dueDate: "",
-      labels: "",
     });
+    setEditingCard(null);
   }
+  
 
   async function handleSaveCard() {
-  if (!formData.content.trim()) {
-    alert("Content is required");
-    return;
-  }
+    if (!formData.content.trim()) return;
 
-  try {
-    await createCard(board.id, {
+    const payload: Partial<Card> = {
       content: formData.content,
-      description: formData.description,
       subjectName: formData.subjectName,
       semester: formData.semester,
-      typeSubject: formData.typeSubject,
-      dueDate: formData.dueDate,
-      labels: formData.labels
-        ? formData.labels.split(",").map((l) => l.trim()).filter((l) => l.length > 0)
-        : [],
-      order: cards.length + 1,
-    });
+    };
+
+    if (editingCard) {
+      await updateCard(editingCard.id, payload);
+      await fetchCards();
+    } else {
+      await createCard(board.id, { ...payload, order: cards.length + 1 });
+    }
 
     resetForm();
-    setShowCardForm(false); // ✅ đóng form sau khi thêm
-  } catch (error) {
-    console.error("Create card failed:", error);
-    alert("Failed to add card");
+    setShowCardForm(false);
   }
-}
-
 
   return (
-    <div className="bg-[#2E2E36] border border-[#4A515B] w-[350px] h-[500px] flex flex-col rounded-xl shadow-lg">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="bg-[#2B2B39] w-[350px] border-b border-[#2F2F3C] flex flex-col rounded-xl shadow-xl"
+    >
+      {/* Header */}
       <div
-        className="bg-[#23232a] h-[60px] cursor-pointer rounded-xl p-3 text-md font-bold flex items-center justify-between"
-        onClick={() => setEditMode(true)}
+        className=" h-[60px] rounded-xl p-3 text-md font-bold flex items-center justify-between group mx-2 mt-2 mb-4 relative"
+        style={{ backgroundColor: selectedColor }}
+       onMouseLeave={() => setShowDropdown(false)}
       >
-        <div className="flex gap-2 items-center">
-          <div className="flex justify-center items-center bg-gray-700 px-2 py-1 text-sm rounded-full text-white">
-            {cardsCount}
+        <div className="flex gap-2 items-center w-full">
+          <div
+            className="flex items-center gap-2 w-full cursor-grab"
+            {...attributes}
+            {...listeners}
+          >
+            <div className="flex justify-center items-center bg-gray-700 px-2 py-1 text-sm rounded-full text-white">
+              {cardsCount}
+            </div>
+
+            {!editMode && (
+              <span className="text-lg text-white truncate">{board.title}</span>
+            )}
+            {editMode && (
+              <input
+                className="bg-black focus:border-rose-500 border rounded outline-none px-2 text-white w-full"
+                value={board.title}
+                onChange={(e) =>
+                  updateBoard(board.id, {
+                    title: e.target.value,
+                    order: board.order,
+                  })
+                }
+                autoFocus
+                onBlur={() => setEditMode(false)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") setEditMode(false);
+                }}
+              />
+            )}
           </div>
-          {!editMode && <span>{board.title}</span>}
-          {editMode && (
-            <input
-              className="bg-black focus:border-rose-500 border rounded outline-none px-2 text-white"
-              value={board.title}
-              onChange={(e) => updateBoard(board.id, e.target.value)}
-              autoFocus
-              onBlur={() => setEditMode(false)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") setEditMode(false);
+
+          <div className="relative flex items-center gap-2 opacity-0 group-hover:opacity-100 transition duration-200">
+            <AddCardButton onClick={() => setShowCardForm(true)} showLabel={false} children={undefined} />
+
+            <BoardOptionsIcon
+              board={board}
+              deleteBoard={deleteBoard}
+              setEditMode={setEditMode}
+              
+            />
+          </div>
+        </div>
+      </div>
+
+      <SortableContext items={cards.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+        <div className="flex flex-grow flex-col gap-4 p-2 overflow-y-auto">
+          {cards.map((card) => (
+            <TaskCard
+              key={card.id}
+              card={card}
+              deleteCard={deleteCard}
+              onEdit={(card) => {
+                setFormData({
+                  content: card.content,
+                  subjectName: card.subjectName,
+                  semester: card.semester,
+                });
+                setEditingCard(card);
+                setShowCardForm(true);
               }}
             />
-          )}
+          ))}
         </div>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            deleteBoard(board.id);
-          }}
-          className="stroke-gray-200 hover:stroke-white hover:bg-gray-200 rounded px-1 py-2"
-          aria-label="Delete Board"
-        >
-          <TrashIcon />
-        </button>
-      </div>
+      </SortableContext>
 
-      <div className="flex flex-grow flex-col gap-4 p-2 overflow-y-auto">
-        {cards.map((card) => (
-          <TaskCard
-            key={card.id}
-            card={card}
-            deleteCard={deleteCard}
-            updateCard={updateCard}
-          />
-        ))}
-
-        {showCardForm && (
-          <div className="fixed inset-0 bg-white/30 flex justify-center items-center z-50">
-            <div className="bg-[#2E2E36] p-6 rounded-xl shadow-lg w-[90%] max-w-md space-y-4">
-              <h2 className="text-xl font-semibold text-center text-white">Add New Card</h2>
-              <input
-                type="text"
-                placeholder="Content"
-                className="w-full p-2 border rounded bg-black text-white"
-                value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              />
-              <input
-                type="text"
-                placeholder="Description"
-                className="w-full p-2 border rounded bg-black text-white"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              />
-              <input
-                type="text"
-                placeholder="Subject Name"
-                className="w-full p-2 border rounded bg-black text-white"
-                value={formData.subjectName}
-                onChange={(e) => setFormData({ ...formData, subjectName: e.target.value })}
-              />
-              <input
-                type="text"
-                placeholder="Semester"
-                className="w-full p-2 border rounded bg-black text-white"
-                value={formData.semester}
-                onChange={(e) => setFormData({ ...formData, semester: e.target.value })}
-              />
-              <input
-                type="text"
-                placeholder="Type Subject"
-                className="w-full p-2 border rounded bg-black text-white"
-                value={formData.typeSubject}
-                onChange={(e) => setFormData({ ...formData, typeSubject: e.target.value })}
-              />
-              <input
-                type="date"
-                className="w-full p-2 border rounded bg-black text-white"
-                value={formData.dueDate}
-                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-              />
-              <input
-                type="text"
-                placeholder="Labels (comma separated)"
-                className="w-full p-2 border rounded bg-black text-white"
-                value={formData.labels}
-                onChange={(e) => setFormData({ ...formData, labels: e.target.value })}
-              />
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400"
-                  onClick={() => {
-                    resetForm();
-                    setShowCardForm(false);
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
-                  onClick={handleSaveCard}
-                >
-                  Save
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <button
-        className="text-black flex gap-2 items-center border-gray-50 border-2 rounded-md p-4 hover:bg-gray-600 hover:text-white active:bg-black"
-        onClick={() => setShowCardForm(true)}
-        aria-label="Add Card"
-      >
-        <PlusIcon />
+      <AddCardButton onClick={() => setShowCardForm(true)} showLabel className="text-md text-gray-500 hover:text-white rounded-md px-6 py-4">
         Add card
-      </button>
+      </AddCardButton>
+
+
+      <CardFormModal
+  isOpen={showCardForm}
+  onClose={() => {
+    setShowCardForm(false);
+    resetForm();
+  }}
+  onSave={async (data) => {
+    if (editingCard) {
+      await updateCard(editingCard.id, data);
+      await fetchCards();
+    } else {
+      await createCard(board.id, { ...data, order: cards.length + 1 });
+    }
+  }}
+  defaultValues={editingCard || undefined}
+  isEditMode={!!editingCard}
+/>
+
     </div>
   );
 }

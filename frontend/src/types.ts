@@ -6,6 +6,7 @@ export interface Board {
   id: string;
   title: string;
   order: number;
+  color?: string;
   isDeleted: boolean;
   createdAt: string;
   updatedAt: string;

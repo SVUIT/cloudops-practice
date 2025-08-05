@@ -1,6 +1,6 @@
 import React from "react";
 
-const PlusIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+const OptionIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="24"
@@ -11,12 +11,13 @@ const PlusIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className="lucide lucide-plus-icon lucide-plus"
+    className="lucide lucide-ellipsis-icon lucide-ellipsis"
     {...props}
   >
-    <path d="M5 12h14" />
-    <path d="M12 5v14" />
+    <circle cx="12" cy="12" r="1" />
+    <circle cx="19" cy="12" r="1" />
+    <circle cx="5" cy="12" r="1" />
   </svg>
 );
 
-export default PlusIcon;
+export default OptionIcon;

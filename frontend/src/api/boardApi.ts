@@ -42,7 +42,7 @@ export async function createBoard(data: Partial<Board>): Promise<Board> {
   }
 }
 
-export async function updateBoard(id: string, data: { title: string; order: number }): Promise<Board> {
+export async function updateBoard(id: string, data: { title: string; order: number; color?: string }): Promise<Board> {
   try {
     const res = await fetch(`${API_BASE_URL}/boards/${id}`, {
       method: "PUT",

@@ -1,3 +1,5 @@
+//cardApi.ts
+
 import type { Card } from "../types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -55,8 +57,8 @@ export async function updateCard(id: string, data: Partial<Card>): Promise<Card>
     dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
   };
 
-  if (cleanData.boardId) {
-    cleanData.board = { connect: { id: cleanData.boardId } };
+  if (data.boardId) {
+    cleanData.board = { connect: { id: data.boardId } };
     delete cleanData.boardId;
   }
 
@@ -76,12 +78,15 @@ export async function updateCard(id: string, data: Partial<Card>): Promise<Card>
       throw new Error(`Failed to update card: ${res.status}`);
     }
 
-    return await res.json();
+    const updatedCard = await res.json();
+    console.log("✅ Updated card successfully:", updatedCard);
+    return updatedCard;
   } catch (err) {
     console.error("Error updating card:", err);
     throw err;
   }
 }
+
 
 export async function deleteCard(id: string): Promise<void> {
   console.log("Deleting card with id:", id); // ✅ log id
