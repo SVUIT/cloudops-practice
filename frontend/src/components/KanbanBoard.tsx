@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import type { Board, Card } from "../types";
-import BoardFormModal from "./BoardFormModal"; // đường dẫn tương ứng
+import BoardFormModal from "./BoardFormModal"; 
 import DragAndDropWrapper from "./DragAndDropWrapper";
-import AddBoardButton from "./AddBoardButton"; // thêm ở phần import đầu file
+import AddBoardButton from "./AddBoardButton"; 
 
 import {
   fetchBoards,
@@ -30,9 +30,8 @@ function KanbanBoard() {
   const [activeCard, setActiveCard] = useState<Card | null>(null);
 
   const [isBoardModalOpen, setIsBoardModalOpen] = useState(false);
-const [editingBoard, setEditingBoard] = useState<Board | null>(null);
+  const [editingBoard, setEditingBoard] = useState<Board | null>(null);
 
-  
   const [projectTitle, setProjectTitle] = useState("CloudOps-Practice");
   const [isEditingProjectTitle, setIsEditingProjectTitle] = useState(false);
 
@@ -44,58 +43,58 @@ const [editingBoard, setEditingBoard] = useState<Board | null>(null);
   }, []);
 
   const handleAddBoard = () => {
-  setEditingBoard(null); // đang không chỉnh sửa board nào cả
-  setIsBoardModalOpen(true);
-};
+    setEditingBoard(null); 
+    setIsBoardModalOpen(true);
+  };
 
-const handleSubmitBoard = async (data: Partial<Board>) => {
-  let createdBoard: Board | null = null;
+  const handleSubmitBoard = async (data: Partial<Board>) => {
+    let createdBoard: Board | null = null;
 
-  if (editingBoard) {
-    await apiUpdateBoard(editingBoard.id, {
-      ...editingBoard,
-      ...data,
-    });
-  } else {
-    createdBoard = await apiCreateBoard({
-      ...data,
-      order: boards.length + 1,
-    });
-    console.log("Created board response:", createdBoard);
+    if (editingBoard) {
+      await apiUpdateBoard(editingBoard.id, {
+        ...editingBoard,
+        ...data,
+      });
+    } else {
+      createdBoard = await apiCreateBoard({
+        ...data,
+        order: boards.length + 1,
+      });
+      console.log("Created board response:", createdBoard);
 
-    if (!createdBoard?.id) {
-      const latestBoards = await fetchBoards();
-      createdBoard = latestBoards[latestBoards.length - 1];
-    }
+      if (!createdBoard?.id) {
+        const latestBoards = await fetchBoards();
+        createdBoard = latestBoards[latestBoards.length - 1];
+      }
 
-    if (createdBoard) {
-      try {
-        await apiCreateCard({
-          boardId: createdBoard.id,
-          content: "New Task",
-          description: "",
-          subjectName: "Sample Subject",
-          semester: "2025-A",
-          typeSubject: "General",
-          order: 0,
-          isArchived: false,
-          labels: [],
-        });
-      } catch (error) {
-        console.error("Failed to create default card:", error);
+      if (createdBoard) {
+        try {
+          await apiCreateCard({
+            boardId: createdBoard.id,
+            content: "New Task",
+            description: "",
+            subjectName: "Sample Subject",
+            semester: "2025-A",
+            typeSubject: "General",
+            order: 0,
+            isArchived: false,
+            labels: [],
+          });
+        } catch (error) {
+          console.error("Failed to create default card:", error);
+        }
       }
     }
-  }
 
-  const [latestBoards, latestCards] = await Promise.all([
-    fetchBoards(),
-    fetchCards(),
-  ]);
-  setBoards(latestBoards);
-  setCards(latestCards);
-  setIsBoardModalOpen(false);
-  setEditingBoard(null);
-};
+    const [latestBoards, latestCards] = await Promise.all([
+      fetchBoards(),
+      fetchCards(),
+    ]);
+    setBoards(latestBoards);
+    setCards(latestCards);
+    setIsBoardModalOpen(false);
+    setEditingBoard(null);
+  };
 
   const getCardsByBoard = (boardId: string) =>
     cards
@@ -109,13 +108,13 @@ const handleSubmitBoard = async (data: Partial<Board>) => {
 
   async function handleDragEnd(event: DragEndEvent) {
     const activeId = String(event.active.id);
-    const overId = String(event.over?.id);
+    const overId   = String(event.over?.id);
     if (!overId || activeId === overId) return;
 
     const activeCardData = cards.find((card) => card.id === activeId);
-    const overCardData = cards.find((card) => card.id === overId);
+    const overCardData   = cards.find((card) => card.id === overId);
     const activeBoardData = boards.find((b) => String(b.id) === activeId);
-    const overBoardData = boards.find((b) => String(b.id) === overId);
+    const overBoardData   = boards.find((b) => String(b.id) === overId);
 
     if (activeCardData) {
       const activeBoardId = activeCardData.boardId;
@@ -125,9 +124,9 @@ const handleSubmitBoard = async (data: Partial<Board>) => {
 
         if (activeBoardId === overBoardId) {
           const boardCards = getCardsByBoard(activeBoardId);
-          const oldIndex = boardCards.findIndex((c) => c.id === activeId);
-          const newIndex = boardCards.findIndex((c) => c.id === overId);
-          const newCards = arrayMove(boardCards, oldIndex, newIndex);
+          const oldIndex   = boardCards.findIndex((c) => c.id === activeId);
+          const newIndex   = boardCards.findIndex((c) => c.id === overId);
+          const newCards   = arrayMove(boardCards, oldIndex, newIndex);
 
           setCards((prev) =>
             prev.map((c) => {
@@ -143,7 +142,7 @@ const handleSubmitBoard = async (data: Partial<Board>) => {
           );
         } else {
           const overBoardCards = getCardsByBoard(overBoardId);
-          const newIndex = overBoardCards.findIndex((c) => c.id === overId);
+          const newIndex       = overBoardCards.findIndex((c) => c.id === overId);
 
           setCards((prev) =>
             prev.map((c) =>
@@ -161,7 +160,9 @@ const handleSubmitBoard = async (data: Partial<Board>) => {
       } else if (overBoardData) {
         setCards((prev) =>
           prev.map((c) =>
-            c.id === activeId ? { ...c, boardId: overBoardData.id, order: 1 } : c
+            c.id === activeId
+              ? { ...c, boardId: overBoardData.id, order: 1 }
+              : c
           )
         );
 
@@ -220,61 +221,68 @@ const handleSubmitBoard = async (data: Partial<Board>) => {
             <h1 className="text-3xl font-bold text-white">{projectTitle}</h1>
           </>
         )}
-  <div className="rounded-xl p-2 font-bold bg-[#8038F0]">
-  <AddBoardButton onClick={handleAddBoard} showLabel={true} className="text-md">
-    Add new board
-  </AddBoardButton>
-</div>
+
+        <div className="rounded-xl p-2 font-bold bg-[#8038F0]">
+          <AddBoardButton
+            onClick={handleAddBoard}
+            showLabel={true}
+            className="text-md"
+          >
+            Add new board
+          </AddBoardButton>
+        </div>
       </div>
-<div className="px-2 sm:px-4 md:px-6 lg:px-8 xl:px-10">
-      <DragAndDropWrapper
-        boards={boards}
-        cards={cards}
-        activeCard={activeCard}
-        setActiveCard={setActiveCard}
-        getCardsByBoard={getCardsByBoard}
-        handleDragEnd={handleDragEnd}
-        handleAddBoard={handleAddBoard}
-        deleteBoard={async (id) => {
-          await apiDeleteBoard(id);
-          setBoards((prev) => prev.filter((b) => b.id !== id));
-        }}
-        updateBoard={async (id, data) => {
-          await apiUpdateBoard(id, data);
-          setBoards((prev) => prev.map((b) => (b.id === id ? { ...b, ...data } : b)));
-        }}
-        createCard={async (boardId, card) => {
-          await apiCreateCard({ ...card, boardId });
-          const updated = await fetchCards();
-          setCards(updated);
-        }}
-        deleteCard={async (id) => {
-          await apiDeleteCard(id);
-          setCards((prev) => prev.filter((c) => c.id !== id));
-        }}
-        updateCard={async (id, card) => {
-          await apiUpdateCard(id, card);
-          const updated = await fetchCards();
-          setCards(updated);
-        }}
-        fetchCards={async () => {
-          const updated = await fetchCards();
-          setCards(updated);
-        }}
-        maxCards={maxCardsPerBoard}
-      />
-</div>
+
+      <div className="px-2 sm:px-4 md:px-6 lg:px-8 xl:px-10">
+        <DragAndDropWrapper
+          boards={boards}
+          cards={cards}
+          activeCard={activeCard}
+          setActiveCard={setActiveCard}
+          getCardsByBoard={getCardsByBoard}
+          handleDragEnd={handleDragEnd}
+          handleAddBoard={handleAddBoard}
+          deleteBoard={async (id) => {
+            await apiDeleteBoard(id);
+            setBoards((prev) => prev.filter((b) => b.id !== id));
+          }}
+          updateBoard={async (id, data) => {
+            await apiUpdateBoard(id, data);
+            setBoards((prev) =>
+              prev.map((b) => (b.id === id ? { ...b, ...data } : b))
+            );
+          }}
+          createCard={async (boardId, card) => {
+            await apiCreateCard({ ...card, boardId });
+            const updated = await fetchCards();
+            setCards(updated);
+          }}
+          deleteCard={async (id) => {
+            await apiDeleteCard(id);
+            setCards((prev) => prev.filter((c) => c.id !== id));
+          }}
+          updateCard={async (id, card) => {
+            await apiUpdateCard(id, card);
+            const updated = await fetchCards();
+            setCards(updated);
+          }}
+          fetchCards={async () => {
+            const updated = await fetchCards();
+            setCards(updated);
+          }}
+          maxCards={maxCardsPerBoard}
+        />
+      </div>
 
       <BoardFormModal
-      isOpen={isBoardModalOpen}
-      onClose={() => {
-        setIsBoardModalOpen(false);
-        setEditingBoard(null);
-      }}
-      onSubmit={handleSubmitBoard}
-      defaultValues={editingBoard || undefined}
-    />
-
+        isOpen={isBoardModalOpen}
+        onClose={() => {
+          setIsBoardModalOpen(false);
+          setEditingBoard(null);
+        }}
+        onSubmit={handleSubmitBoard}
+        defaultValues={editingBoard || undefined}
+      />
     </div>
   );
 }

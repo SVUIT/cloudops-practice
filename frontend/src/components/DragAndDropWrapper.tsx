@@ -1,4 +1,3 @@
-// components/DragAndDropWrapper.tsx
 import {
   DndContext,
   closestCorners,
@@ -16,7 +15,7 @@ import {
 import TaskCard from "./TaskCard";
 import BoardContainer from "./BoardContainer";
 import type { Board, Card } from "../types";
-import AddBoardButton from "./AddBoardButton"; // thêm ở phần import đầu file
+import AddBoardButton from "./AddBoardButton"; 
 
 interface Props {
   boards: Board[];
@@ -27,7 +26,6 @@ interface Props {
   handleDragEnd: (event: DragEndEvent) => void;
   handleAddBoard: () => void;
 
-  // Các hàm CRUD được truyền vào để dùng trong BoardContainer
   deleteBoard: (id: string) => Promise<void>;
   updateBoard: (id: string, data: { title: string; order: number }) => Promise<void>;
   createCard: (boardId: string, card: Partial<Card>) => Promise<void>;

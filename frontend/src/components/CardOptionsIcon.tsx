@@ -1,5 +1,3 @@
-// components/CardOptionsIcon.tsx
-
 import { useState } from "react";
 import type { Card } from "../types";
 import EditIcon from "../icons/EditIcon";

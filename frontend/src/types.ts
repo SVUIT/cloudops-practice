@@ -1,7 +1,5 @@
 export type Id = string;
 
-// types.ts
-
 export interface Board {
   id: string;
   title: string;

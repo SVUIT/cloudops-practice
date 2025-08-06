@@ -10,7 +10,6 @@ interface BoardOptionsIconProps {
   board: Board;
   deleteBoard: (id: string) => void;
   setEditMode: (value: boolean) => void;
-  
 }
 
 const BoardOptionsIcon = ({
@@ -20,19 +19,16 @@ const BoardOptionsIcon = ({
   const [showDropdown, setShowDropdown] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-
   const handleUpdateBoard = async (updatedData: Partial<Board>) => {
-  if (!updatedData.title) return;
+    if (!updatedData.title) return;
 
-  await updateBoard(board.id, {
-    title: updatedData.title,
-    order: board.order, // dùng lại order cũ
-  });
+    await updateBoard(board.id, {
+      title: updatedData.title,
+      order: board.order, 
+    });
 
-  fetchBoards();
-  
-};
-
+    fetchBoards();
+  };
 
   return (
     <div className="relative">
@@ -50,36 +46,36 @@ const BoardOptionsIcon = ({
       {showDropdown && (
         <div className="absolute right-0 top-10 bg-[#1F1D29] text-white border border-gray-600 rounded-lg shadow-md z-20 w-32">
           <div className="flex flex-col gap-y-1">
-          <div className="px-4 py-2 text-xs text-gray-300 mt-2 mb-2">
-            Board options
-          </div>
-          <button
-            className="flex items-center gap-2 px-4 py-2 hover:bg-gray-700 w-full text-left"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsEditModalOpen(true); // mở form modal
-              setShowDropdown(false);
-            }}
-          >
-            <EditIcon /> Edit
-          </button>
-          <button
-            className="flex items-center gap-2 px-4 py-2 hover:bg-red-700/20 w-full text-left mb-4"
-            onClick={(e) => {
-              e.stopPropagation();
-              deleteBoard(board.id);
-              setShowDropdown(false);
-            }}
-          >
-            <TrashIcon /> Delete
-          </button>
+            <div className="px-4 py-2 text-xs text-gray-300 mt-2 mb-2">
+              Board options
+            </div>
+            <button
+              className="flex items-center gap-2 px-4 py-2 hover:bg-gray-700 w-full text-left"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditModalOpen(true); 
+                setShowDropdown(false);
+              }}
+            >
+              <EditIcon /> Edit
+            </button>
+            <button
+              className="flex items-center gap-2 px-4 py-2 hover:bg-red-700/20 w-full text-left mb-4"
+              onClick={(e) => {
+                e.stopPropagation();
+                deleteBoard(board.id);
+                setShowDropdown(false);
+              }}
+            >
+              <TrashIcon /> Delete
+            </button>
           </div>
         </div>
       )}
 
       {isEditModalOpen && (
         <BoardFormModal
-          key={board.id} // 👈 force remount khi board khác
+          key={board.id} 
           isOpen={true}
           onClose={() => setIsEditModalOpen(false)}
           isEditing={true}
@@ -88,15 +84,14 @@ const BoardOptionsIcon = ({
             if (!data.title) return;
             await updateBoard(board.id, {
               title: data.title,
-              color: data.color || board.color, // 👈 cập nhật luôn color
+              color: data.color || board.color, 
               order: board.order,
             });
             setIsEditModalOpen(false);
-            fetchBoards(); // 👈 nhớ reload lại list board
+            fetchBoards(); 
           }}
         />
       )}
-
     </div>
   );
 };

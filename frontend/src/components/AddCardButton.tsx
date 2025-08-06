@@ -1,4 +1,3 @@
-// components/AddCardButton.tsx
 import PlusIcon from "../icons/PlusIcon";
 
 interface Props {

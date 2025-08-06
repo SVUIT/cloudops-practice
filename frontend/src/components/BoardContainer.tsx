@@ -21,7 +21,6 @@ interface Props {
   updateCard: (id: string, card: Partial<Card>) => Promise<void>;
   fetchCards: () => Promise<void>;
   maxCards: number;
-  
 }
 
 function BoardContainer({
@@ -35,7 +34,7 @@ function BoardContainer({
   fetchCards,
   maxCards,
 }: Props) {
-const selectedColor = board.color || "#1F1D29";
+  const selectedColor = board.color || "#1F1D29";
   const [editMode, setEditMode] = useState(false);
   const [showCardForm, setShowCardForm] = useState(false);
   const [editingCard, setEditingCard] = useState<Card | null>(null);
@@ -70,7 +69,6 @@ const selectedColor = board.color || "#1F1D29";
     });
     setEditingCard(null);
   }
-  
 
   async function handleSaveCard() {
     if (!formData.content.trim()) return;
@@ -102,7 +100,7 @@ const selectedColor = board.color || "#1F1D29";
       <div
         className=" h-[60px] rounded-xl p-3 text-md font-bold flex items-center justify-between group mx-2 mt-2 mb-4 relative"
         style={{ backgroundColor: selectedColor }}
-       onMouseLeave={() => setShowDropdown(false)}
+        onMouseLeave={() => setShowDropdown(false)}
       >
         <div className="flex gap-2 items-center w-full">
           <div
@@ -137,13 +135,16 @@ const selectedColor = board.color || "#1F1D29";
           </div>
 
           <div className="relative flex items-center gap-2 opacity-0 group-hover:opacity-100 transition duration-200">
-            <AddCardButton onClick={() => setShowCardForm(true)} showLabel={false} children={undefined} />
+            <AddCardButton
+              onClick={() => setShowCardForm(true)}
+              showLabel={false}
+              children={undefined}
+            />
 
             <BoardOptionsIcon
               board={board}
               deleteBoard={deleteBoard}
               setEditMode={setEditMode}
-              
             />
           </div>
         </div>
@@ -170,29 +171,31 @@ const selectedColor = board.color || "#1F1D29";
         </div>
       </SortableContext>
 
-      <AddCardButton onClick={() => setShowCardForm(true)} showLabel className="text-md text-gray-500 hover:text-white rounded-md px-6 py-4">
+      <AddCardButton
+        onClick={() => setShowCardForm(true)}
+        showLabel
+        className="text-md text-gray-500 hover:text-white rounded-md px-6 py-4"
+      >
         Add card
       </AddCardButton>
 
-
       <CardFormModal
-  isOpen={showCardForm}
-  onClose={() => {
-    setShowCardForm(false);
-    resetForm();
-  }}
-  onSave={async (data) => {
-    if (editingCard) {
-      await updateCard(editingCard.id, data);
-      await fetchCards();
-    } else {
-      await createCard(board.id, { ...data, order: cards.length + 1 });
-    }
-  }}
-  defaultValues={editingCard || undefined}
-  isEditMode={!!editingCard}
-/>
-
+        isOpen={showCardForm}
+        onClose={() => {
+          setShowCardForm(false);
+          resetForm();
+        }}
+        onSave={async (data) => {
+          if (editingCard) {
+            await updateCard(editingCard.id, data);
+            await fetchCards();
+          } else {
+            await createCard(board.id, { ...data, order: cards.length + 1 });
+          }
+        }}
+        defaultValues={editingCard || undefined}
+        isEditMode={!!editingCard}
+      />
     </div>
   );
 }

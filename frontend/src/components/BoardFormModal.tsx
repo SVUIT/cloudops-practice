@@ -11,14 +11,20 @@ interface Props {
   editingBoard?: Board;
 }
 
-function BoardFormModal({ isOpen, onClose, onSubmit, defaultValues, isEditing = false, }: Props) {
+function BoardFormModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  defaultValues,
+  isEditing = false,
+}: Props) {
   const [title, setTitle] = useState("");
   const [selectedColor, setSelectedColor] = useState("#9198A1");
 
   const colors = [
-    "#7F8CFF", // pastel tím xanh (New)
-    "#49D2CF", // pastel teal (Interviewed)
-    "#FF8C42", // pastel cam rực (Shortlisted)
+    "#7F8CFF", // pastel tím xanh 
+    "#49D2CF", // pastel teal
+    "#FF8C42", // pastel cam rực 
     "#F85149", // pastel đỏ san hô
     "#DB61A2", // pastel hồng tím
     "#AB7DF8", // pastel tím nhạt
@@ -27,28 +33,25 @@ function BoardFormModal({ isOpen, onClose, onSubmit, defaultValues, isEditing = 
   ];
 
   useEffect(() => {
-  if (isOpen) {
-        console.log("Default values in modal:", defaultValues); // 👈 LOG
-
-    if (defaultValues) {
-      setTitle(defaultValues.title || "");
-      setSelectedColor(defaultValues.color || "#9198A1");
-    } else {
-      setTitle("");
-      setSelectedColor("#9198A1");
+    if (isOpen) {
+      if (defaultValues) {
+        setTitle(defaultValues.title || "");
+        setSelectedColor(defaultValues.color || "#9198A1");
+      } else {
+        setTitle("");
+        setSelectedColor("#9198A1");
+      }
     }
-  }
-}, [defaultValues, isOpen]);
-
+  }, [defaultValues, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
     onSubmit({ title, color: selectedColor });
     if (!isEditing) {
-    setTitle("");
-    setSelectedColor("#9198A1");
-  }
+      setTitle("");
+      setSelectedColor("#9198A1");
+    }
     onClose();
   };
 
@@ -61,13 +64,13 @@ function BoardFormModal({ isOpen, onClose, onSubmit, defaultValues, isEditing = 
     >
       <div className="bg-[#1F1D29] bg-opacity-20 p-6 rounded shadow-md w-96">
         <h2 className="text-lg font-bold mb-4">
-          {isEditing  ? "Edit Board" : "Add Board"}
+          {isEditing ? "Edit Board" : "Add Board"}
         </h2>
         <hr className="border-gray-500 mb-4" />
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="text-sm text-gray-300" htmlFor="board-title">
-          Board title *
-        </label>
+            Board title *
+          </label>
           <input
             type="text"
             placeholder="Enter board title"
@@ -77,9 +80,7 @@ function BoardFormModal({ isOpen, onClose, onSubmit, defaultValues, isEditing = 
           />
 
           {/* Color picker */}
-          <label className="text-sm text-gray-300">
-          Color
-        </label>
+          <label className="text-sm text-gray-300">Color</label>
           <div className="flex gap-2">
             {colors.map((color) => (
               <button

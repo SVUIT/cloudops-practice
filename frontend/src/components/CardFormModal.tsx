@@ -23,25 +23,28 @@ function CardFormModal({
   });
 
   useEffect(() => {
-  if (defaultValues) {
-    setFormData((prevData) => {
-      const newData = {
-        content: defaultValues.content || "",
-        subjectName: defaultValues.subjectName || "",
-        semester: defaultValues.semester || "",
-      };
+    if (defaultValues) {
+      setFormData((prevData) => {
+        const newData = {
+          content: defaultValues.content || "",
+          subjectName: defaultValues.subjectName || "",
+          semester: defaultValues.semester || "",
+        };
 
-      const isSame =
-        prevData.content === newData.content &&
-        prevData.subjectName === newData.subjectName &&
-        prevData.semester === newData.semester;
+        const isSame =
+          prevData.content === newData.content &&
+          prevData.subjectName === newData.subjectName &&
+          prevData.semester === newData.semester;
 
-      if (!isSame) return newData;
-      return prevData; // Không cần cập nhật
-    });
-  }
-}, [defaultValues?.content, defaultValues?.subjectName, defaultValues?.semester]);
-
+        if (!isSame) return newData;
+        return prevData; 
+      });
+    }
+  }, [
+    defaultValues?.content,
+    defaultValues?.subjectName,
+    defaultValues?.semester,
+  ]);
 
   const handleSubmit = async () => {
     if (!formData.content?.trim()) return;
@@ -52,7 +55,7 @@ function CardFormModal({
 
   if (!isOpen) return null;
 
-   return (
+  return (
     <div className="fixed inset-0 bg-white/30 flex justify-center items-center z-50">
       <div className="bg-[#2B2B39] p-6 rounded-xl shadow-lg w-[90%] max-w-md space-y-4">
         <div>
@@ -64,9 +67,7 @@ function CardFormModal({
 
         <div className="space-y-4">
           <div>
-            <label className="text-sm text-gray-300">
-              Content *
-            </label>
+            <label className="text-sm text-gray-300">Content *</label>
             <input
               type="text"
               placeholder="Content"
