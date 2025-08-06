@@ -38,7 +38,7 @@ function BoardContainer({
   const [editMode, setEditMode] = useState(false);
   const [showCardForm, setShowCardForm] = useState(false);
   const [editingCard, setEditingCard] = useState<Card | null>(null);
-  const [formData, setFormData] = useState({
+  const [, setFormData] = useState({
     content: "",
     subjectName: "",
     semester: "",
@@ -68,26 +68,6 @@ function BoardContainer({
       semester: "",
     });
     setEditingCard(null);
-  }
-
-  async function handleSaveCard() {
-    if (!formData.content.trim()) return;
-
-    const payload: Partial<Card> = {
-      content: formData.content,
-      subjectName: formData.subjectName,
-      semester: formData.semester,
-    };
-
-    if (editingCard) {
-      await updateCard(editingCard.id, payload);
-      await fetchCards();
-    } else {
-      await createCard(board.id, { ...payload, order: cards.length + 1 });
-    }
-
-    resetForm();
-    setShowCardForm(false);
   }
 
   return (

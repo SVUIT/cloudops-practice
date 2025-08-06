@@ -19,17 +19,6 @@ const BoardOptionsIcon = ({
   const [showDropdown, setShowDropdown] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const handleUpdateBoard = async (updatedData: Partial<Board>) => {
-    if (!updatedData.title) return;
-
-    await updateBoard(board.id, {
-      title: updatedData.title,
-      order: board.order, 
-    });
-
-    fetchBoards();
-  };
-
   return (
     <div className="relative">
       <button
