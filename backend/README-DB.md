@@ -14,7 +14,7 @@ docker-compose up -d
 #Pushes schema changes to the database without creating migration files
 npx prisma db push
 
-#Executes migration files to update the database schema.
+#Executes migration files to update the database schema
 npx prisma migrate deploy
 ```
 
