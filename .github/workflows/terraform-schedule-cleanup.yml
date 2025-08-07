@@ -1,0 +1,56 @@
+name: Auto Destroy Stale PR Workspaces
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # Chạy mỗi 1 tiếng
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+env:
+  TF_TOKEN_app_terraform_io: ${{ secrets.HCP_API }}
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  destroy-old-pr:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Find PRs older than 2 hours
+        id: find
+        run: |
+          echo "📦 Fetching PRs older than 2 hours..."
+          old_prs=$(gh pr list --state open --json number,createdAt --jq '
+            map(select((.createdAt | fromdateiso8601) < (now - 7200 | todate))) | map(.number)')
+          
+          echo "Found old PRs: $old_prs"
+          echo "old_prs=$old_prs" >> $GITHUB_OUTPUT
+
+      - name: Setup Terraform
+        if: steps.find.outputs.old_prs != '[]'
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.4.0
+
+      - name: Destroy resources for old PRs
+        if: steps.find.outputs.old_prs != '[]'
+        working-directory: infra/terraform
+        run: |
+          echo "Old PRs to destroy: ${{ steps.find.outputs.old_prs }}"
+          terraform init
+          for pr in $(echo '${{ steps.find.outputs.old_prs }}' | jq -r '.[]'); do
+            echo "🔴 Destroying resources for PR #$pr..."
+            terraform workspace select dev$pr || continue
+            if terraform destroy -auto-approve -var="resource_prefix=dev$pr"; then
+              terraform workspace select default
+              terraform workspace delete dev$pr
+              echo "✅ Cleaned up PR #$pr"
+            else
+              echo "❌ Failed to destroy PR #$pr"
+            fi
+            done

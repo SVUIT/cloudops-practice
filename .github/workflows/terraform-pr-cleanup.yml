@@ -1,0 +1,58 @@
+name:  Cleanup Terraform Dev Resources on PR Close or Merged
+
+on:
+  pull_request:
+    types: [closed, merged]
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+env:
+  TF_TOKEN_app_terraform_io: ${{ secrets.HCP_API }}
+
+concurrency:
+  group: terraform-destroy-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.4.0
+      
+      - name: Terraform Init
+        working-directory: infra/terraform
+        run: terraform init
+
+      - name: Check workspace exists
+        working-directory: infra/terraform
+        id: workspace_check
+        run: |
+          if terraform workspace list | grep -q "dev${{ github.event.pull_request.number }}"; then
+            echo "workspace_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "workspace_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Select workspace
+        if: steps.workspace_check.outputs.workspace_exists == 'true'
+        working-directory: infra/terraform
+        run: terraform workspace select dev${{ github.event.pull_request.number }}
+
+      - name: Destroy resources
+        if: steps.workspace_check.outputs.workspace_exists == 'true'
+        working-directory: infra/terraform
+        run: terraform destroy -auto-approve -var="resource_prefix=dev${{ github.event.pull_request.number }}"
+
+      - name: Delete workspace
+        if: steps.workspace_check.outputs.workspace_exists == 'true'
+        working-directory: infra/terraform
+        run: |
+          terraform workspace select default
+          terraform workspace delete dev${{ github.event.pull_request.number }}

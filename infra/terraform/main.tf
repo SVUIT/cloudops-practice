@@ -16,7 +16,7 @@ module "resource_groups" {
 
   for_each = toset(local.regions)
 
-  name     = "roadmap-maker-${each.value}-rg"
+  name     = "roadmap-maker-${each.value}-rg-${var.resource_prefix}"
   location = each.value
   tags     = local.common_tags
 }
@@ -25,7 +25,7 @@ module "resource_groups" {
 module "primary_network" {
   source = "./modules/network"
 
-  vnet_name           = "roadmap-maker-primary-vnet"
+  vnet_name           = "roadmap-maker-primary-vnet-${var.resource_prefix}"
   location            = local.primary_region
   resource_group_name = module.resource_groups[local.primary_region].name
   address_space       = ["10.0.0.0/16"]
@@ -47,7 +47,7 @@ module "primary_network" {
 # Primary AKS Cluster in Southeast Asia
 module "primary_aks" {
   source              = "./modules/aks"
-  cluster_name        = "roadmap-maker-primary-aks"
+  cluster_name        = "roadmap-maker-primary-aks-${var.resource_prefix}"
   location            = local.primary_region
   resource_group_name = module.resource_groups[local.primary_region].name
   dns_prefix          = "roadmap-maker-primary"
@@ -91,7 +91,7 @@ data "azuread_service_principal" "current" {
 
 # PostgreSQL Flexible Server for each region
 resource "azurerm_postgresql_flexible_server" "primary" {
-  name                = "roadmap-maker-${local.primary_region}-psql"
+  name                = "roadmap-maker-${local.primary_region}-psql-${var.resource_prefix}"
   location            = local.primary_region
   resource_group_name = module.resource_groups[local.primary_region].name
   zone = "2"

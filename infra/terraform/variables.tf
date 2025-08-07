@@ -48,3 +48,9 @@ variable "ARM_CLIENT_SECRET" {
   type        = string
   sensitive   = true
 } 
+
+variable "resource_prefix" {
+  type        = string
+  description = "Prefix to apply to all resources"
+  default = ""
+}
