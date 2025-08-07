@@ -1,0 +1,52 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model Board {
+  id        String   @id @default(uuid())
+  title     String
+  order     Int
+  color   String?
+  isDeleted Boolean  @default(false) @map("is_deleted")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  // Relationship: Board có nhiều Tasks
+  cards    Card[]
+  
+  @@map("boards")
+}
+
+model Card {
+  id           String    @id @default(uuid())
+  boardId      String    @map("board_id")
+  content      String
+  description  String?
+  order        Int
+  subjectName  String    @map("subject_name")
+  semester     String
+  typeSubject  String?    @map("type_subject")
+  dueDate      DateTime? @map("due_date")
+  isArchived   Boolean   @default(false) @map("is_archived")
+  labels       String[]  @default([])
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  isDeleted    Boolean   @default(false)
+  
+  // Relationship: Task thuộc về một Board
+  board        Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  
+  @@map("cards")
+}
