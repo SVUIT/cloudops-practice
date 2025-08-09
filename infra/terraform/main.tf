@@ -81,6 +81,43 @@ module "primary_aks" {
   depends_on = [module.primary_network]
 }
 
+# Secondary AKS Cluster in East Asia (native cluster)
+module "secondary_aks" {
+  source              = "./modules/aks"
+  cluster_name        = "roadmap-maker-secondary-aks"
+  location            = "eastasia"
+  resource_group_name = module.resource_groups["eastasia"].name
+  dns_prefix          = "roadmap-maker-secondary"
+  kubernetes_version  = "1.32.5"
+
+  # Node pool configuration
+  node_count          = 2
+  node_vm_size        = "Standard_B2s"
+  enable_auto_scaling = false
+  # min_count           = 1
+  # max_count           = 5
+
+  # Resource limits
+  max_pods        = 50
+  os_disk_size_gb = 32
+
+  # Network configuration
+  network_plugin = "azure"
+  network_policy = "azure"
+  vnet_subnet_id = module.primary_network.subnet_ids["aks"] # Adjust if you have a separate network for eastasia
+
+  # configure service CIDR to avoid conflicts with app subnet
+  service_cidr   = "172.17.0.0/16"
+  dns_service_ip = "172.17.0.10"
+
+  tags = merge(local.common_tags, {
+    cluster-type = "secondary"
+    region       = "secondary"
+  })
+
+  depends_on = [module.primary_network]
+}
+
 # Data source for current Azure client configuration
 data "azurerm_client_config" "current" {} # get info about the current Azure client
 
@@ -94,9 +131,9 @@ resource "azurerm_postgresql_flexible_server" "primary" {
   name                = "roadmap-maker-${local.primary_region}-psql"
   location            = local.primary_region
   resource_group_name = module.resource_groups[local.primary_region].name
-  zone = "2"
+  zone                = "2"
 
-  sku_name   = "B_Standard_B1ms"  
+  sku_name   = "B_Standard_B1ms"
   version    = "15"
   storage_mb = 32768 # 32GB
 
