@@ -14,6 +14,7 @@ permissions:
 
 env:
   TF_TOKEN_app_terraform_io: ${{ secrets.HCP_API }}
+  TF_WORKSPACE: production
 
 jobs:
   filter: 
@@ -65,7 +66,7 @@ jobs:
         working-directory: infra/terraform
         if: github.event_name == 'pull_request'
         run: |
-          terraform plan -no-color > tfplan.txt
+          terraform plan -var="resource_prefix=production" -no-color > tfplan.txt
           echo "PLAN_EXIT_CODE=$?" >> $GITHUB_ENV
         continue-on-error: true
 

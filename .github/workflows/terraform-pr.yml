@@ -12,6 +12,7 @@ permissions:
 
 env:
   TF_TOKEN_app_terraform_io: ${{ secrets.HCP_API }}
+  TF_WORKSPACE: dev${{ github.event.pull_request.number }}
 
 jobs:
   filter: 
@@ -50,16 +51,7 @@ jobs:
 
       - name: Terraform Init & Workspace
         working-directory: infra/terraform
-        run: |
-          terraform init
-          terraform workspace new dev${{ github.event.pull_request.number }} || terraform workspace select dev${{ github.event.pull_request.number }}
-
-      - name: Terraform Destroy if synchronize
-        if: github.event.action == 'synchronize'
-        working-directory: infra/terraform
-        run: |
-          terraform workspace select dev${{ github.event.pull_request.number }}
-          terraform destroy -auto-approve -var="resource_prefix=dev${{ github.event.pull_request.number }}"
+        run: terraform init
 
       - name: Terraform Validate
         id: validate
@@ -71,7 +63,7 @@ jobs:
         working-directory: infra/terraform
         if: github.event_name == 'pull_request'
         run: |
-          terraform plan -var="resource_prefix=dev${{ github.event.pull_request.number }}" -no-color > tfplan.txt
+          terraform plan -var="resource_prefix=$TF_WORKSPACE" -no-color > tfplan.txt
           echo "PLAN_EXIT_CODE=$?" >> $GITHUB_ENV
         continue-on-error: true
 
@@ -131,5 +123,4 @@ jobs:
         if: env.PLAN_EXIT_CODE == '0'
         working-directory: infra/terraform
         run: |
-          terraform workspace select dev${{ github.event.pull_request.number }}
-          terraform apply -auto-approve -var="resource_prefix=dev${{ github.event.pull_request.number }}"
+          terraform apply -auto-approve -var="resource_prefix=$TF_WORKSPACE"

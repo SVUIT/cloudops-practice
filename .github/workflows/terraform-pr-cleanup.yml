@@ -2,7 +2,7 @@ name:  Cleanup Terraform Dev Resources on PR Close or Merged
 
 on:
   pull_request:
-    types: [closed, merged]
+    types: [closed]
     branches:
       - main
 
@@ -11,6 +11,7 @@ permissions:
 
 env:
   TF_TOKEN_app_terraform_io: ${{ secrets.HCP_API }}
+  TF_WORKSPACE: dev${{ github.event.pull_request.number }}
 
 concurrency:
   group: terraform-destroy-${{ github.event.pull_request.number }}
@@ -30,29 +31,20 @@ jobs:
         working-directory: infra/terraform
         run: terraform init
 
-      - name: Check workspace exists
-        working-directory: infra/terraform
-        id: workspace_check
-        run: |
-          if terraform workspace list | grep -q "dev${{ github.event.pull_request.number }}"; then
-            echo "workspace_exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "workspace_exists=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Select workspace
-        if: steps.workspace_check.outputs.workspace_exists == 'true'
-        working-directory: infra/terraform
-        run: terraform workspace select dev${{ github.event.pull_request.number }}
-
       - name: Destroy resources
         if: steps.workspace_check.outputs.workspace_exists == 'true'
         working-directory: infra/terraform
-        run: terraform destroy -auto-approve -var="resource_prefix=dev${{ github.event.pull_request.number }}"
+        run: terraform destroy -auto-approve -var="resource_prefix=$TF_WORKSPACE"
 
       - name: Delete workspace
         if: steps.workspace_check.outputs.workspace_exists == 'true'
         working-directory: infra/terraform
         run: |
+          # Try CLI first
           terraform workspace select default
-          terraform workspace delete dev${{ github.event.pull_request.number }}
+          terraform workspace delete $TF_WORKSPACE || \
+          # Fallback to API
+          curl -s -X DELETE \
+            "https://app.terraform.io/api/v2/organizations/andrewdq/workspaces/cloudops-practice-$TF_WORKSPACE" \
+            -H "Authorization: Bearer $TF_TOKEN_app_terraform_io"
+        continue-on-error: true
