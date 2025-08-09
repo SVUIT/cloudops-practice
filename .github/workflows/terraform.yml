@@ -49,11 +49,46 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with: 
           terraform_version: 1.4.0
+      
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
+      - name: Create Production Workspace on Terraform Cloud
+        run: |
+          WORKSPACE_NAME="production"
+          ORG_NAME="andrewdq" # đổi thành tên org của bạn trên Terraform Cloud
+          
+          echo "Checking if workspace $WORKSPACE_NAME exists..."
+          EXISTS=$(curl -s \
+            --header "Authorization: Bearer $TF_TOKEN_app_terraform_io" \
+            "https://app.terraform.io/api/v2/organizations/$ORG_NAME/workspaces/$WORKSPACE_NAME" \
+            | jq -r '.data.id // empty')
+
+          if [ -z "$EXISTS" ]; then
+            echo "Creating workspace $WORKSPACE_NAME..."
+            curl -s \
+              --header "Authorization: Bearer $TF_TOKEN_app_terraform_io" \
+              --header "Content-Type: application/vnd.api+json" \
+              --request POST \
+              --data "{
+                \"data\": {
+                  \"attributes\": {
+                    \"name\": \"$WORKSPACE_NAME\",
+                    \"execution-mode\": \"remote\"
+                  },
+                  \"type\": \"workspaces\"
+                }
+              }" \
+              "https://app.terraform.io/api/v2/organizations/$ORG_NAME/workspaces" > /dev/null
+          else
+            echo "Workspace $WORKSPACE_NAME already exists."
+          fi
 
       - name: Terraform Init
-        id: init
         working-directory: infra/terraform
-        run: terraform init
+        run: |
+          terraform init
+          terraform workspace select production
 
       - name: Terraform Validate
         id: validate
@@ -65,7 +100,7 @@ jobs:
         working-directory: infra/terraform
         if: github.event_name == 'pull_request'
         run: |
-          terraform plan -no-color > tfplan.txt
+          terraform plan -var="resource_prefix=production" -no-color > tfplan.txt
           echo "PLAN_EXIT_CODE=$?" >> $GITHUB_ENV
         continue-on-error: true
 

@@ -28,17 +28,15 @@ jobs:
           filters: |
             infra:
               - 'infra/**'
+    concurrency: 
+      group: terraform-apply
+      cancel-in-progress: false
 
   terraform:
     name: Terraform plan & apply in Dev Workspace
     needs: filter
     if: needs.filter.outputs.infra == 'true'
     runs-on: ubuntu-latest
-
-    concurrency: 
-      group: terraform-apply
-      cancel-in-progress: false
-
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -47,19 +45,47 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with: 
           terraform_version: 1.4.0
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
+      - name: Create Workspace on Terraform Cloud
+        run: |
+          WORKSPACE_NAME="cloudops-practice-dev${{ github.event.pull_request.number }}"
+          ORG_NAME="andrewdq"
+          echo "Checking if workspace $WORKSPACE_NAME exists..."
+          EXISTS=$(curl -s \
+            --header "Authorization: Bearer $TF_TOKEN_app_terraform_io" \
+            "https://app.terraform.io/api/v2/organizations/$ORG_NAME/workspaces/$WORKSPACE_NAME" \
+            | jq -r '.data.id // empty')
+
+          if [ -z "$EXISTS" ]; then
+            echo "Creating workspace $WORKSPACE_NAME..."
+            curl -s \
+              --header "Authorization: Bearer $TF_TOKEN_app_terraform_io" \
+              --header "Content-Type: application/vnd.api+json" \
+              --request POST \
+              --data "{
+                \"data\": {
+                  \"attributes\": {
+                    \"name\": \"$WORKSPACE_NAME\",
+                    \"execution-mode\": \"local\"
+                  },
+                  \"type\": \"workspaces\"
+                }
+              }" \
+              "https://app.terraform.io/api/v2/organizations/$ORG_NAME/workspaces" > /dev/null
+            echo "Workspace $WORKSPACE_NAME created successfully."
+          else
+            echo "Workspace $WORKSPACE_NAME already exists."
+          fi
 
       - name: Terraform Init & Workspace
         working-directory: infra/terraform
         run: |
           terraform init
-          terraform workspace new dev${{ github.event.pull_request.number }} || terraform workspace select dev${{ github.event.pull_request.number }}
-
-      - name: Terraform Destroy if synchronize
-        if: github.event.action == 'synchronize'
-        working-directory: infra/terraform
-        run: |
-          terraform workspace select dev${{ github.event.pull_request.number }}
-          terraform destroy -auto-approve -var="resource_prefix=dev${{ github.event.pull_request.number }}"
+          WORKSPACE_NAME="cloudops-practice-dev${{ github.event.pull_request.number }}"
+          echo "Selecting workspace $WORKSPACE_NAME..."
+          terraform workspace select $WORKSPACE_NAME
 
       - name: Terraform Validate
         id: validate
@@ -73,7 +99,6 @@ jobs:
         run: |
           terraform plan -var="resource_prefix=dev${{ github.event.pull_request.number }}" -no-color > tfplan.txt
           echo "PLAN_EXIT_CODE=$?" >> $GITHUB_ENV
-        continue-on-error: true
 
       - name: Comment Plan 
         if: github.event_name == 'pull_request'
@@ -131,5 +156,4 @@ jobs:
         if: env.PLAN_EXIT_CODE == '0'
         working-directory: infra/terraform
         run: |
-          terraform workspace select dev${{ github.event.pull_request.number }}
           terraform apply -auto-approve -var="resource_prefix=dev${{ github.event.pull_request.number }}"

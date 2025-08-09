@@ -45,11 +45,15 @@ jobs:
           terraform init
           for pr in $(echo '${{ steps.find.outputs.old_prs }}' | jq -r '.[]'); do
             echo "🔴 Destroying resources for PR #$pr..."
-            terraform workspace select dev$pr || continue
+            WORKSPACE_NAME="cloudops-practice-dev$pr"
+            echo "Selecting workspace $WORKSPACE_NAME..."
+            terraform workspace select $WORKSPACE_NAME
             if terraform destroy -auto-approve -var="resource_prefix=dev$pr"; then
-              terraform workspace select default
-              terraform workspace delete dev$pr
               echo "✅ Cleaned up PR #$pr"
+              # Delete workspace via API
+              curl -s -X DELETE \
+                "https://app.terraform.io/api/v2/organizations/andrewdq/workspaces/$WORKSPACE_NAME" \
+                -H "Authorization: Bearer $TF_TOKEN_app_terraform_io" || echo "Workspace deletion failed"
             else
               echo "❌ Failed to destroy PR #$pr"
             fi

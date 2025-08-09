@@ -3,7 +3,7 @@ terraform {
     organization = "andrewdq"
 
     workspaces {
-      name = "cloudops-practice"
+      prefix = "cloudops-practice-"
     }
   }
 }
