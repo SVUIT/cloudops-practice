@@ -143,6 +143,25 @@ module "secondary_aks" {
   depends_on = [module.secondary_network]
 }
 
+module "alerts" {
+  source = "./modules/alerts"
+
+  resource_group_name    = module.resource_groups[local.primary_region].name
+  contact_emails         = local.alert_emails
+
+  action_group_name       = "ag-roadmap-maker"
+  action_group_short_name = "RmAlerts"
+
+  budget_name   = "roadmap-maker-annual-budget"
+  budget_amount = 100
+  time_grain    = "Annually"
+  start_date    = "2025-07-01"
+  end_date      = "2025-08-31"
+
+  warn_threshold = 50
+  crit_threshold = 70
+}
+
 # Data source for current Azure client configuration
 data "azurerm_client_config" "current" {} # get info about the current Azure client
 
