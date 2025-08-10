@@ -63,8 +63,7 @@ module "primary_aks" {
   node_count          = 2              # Create 2 nodes initially for primary cluster
   node_vm_size        = "Standard_B2s" # 2 vCPU, 4GB RAM
   enable_auto_scaling = false
-  # min_count           = 1
-  # max_count           = 5
+
 
   # Resource limits
   max_pods        = 50
@@ -87,23 +86,61 @@ module "primary_aks" {
   depends_on = [module.primary_network]
 }
 
-module "alerts" {
-  source = "./modules/alerts"
+# Secondary Network in East Asia
+module "secondary_network" {
+  source              = "./modules/network"
+  vnet_name           = "roadmap-maker-secondary-vnet"
+  location            = "eastasia"
+  resource_group_name = module.resource_groups["eastasia"].name
+  address_space       = ["10.1.0.0/16"]
 
-  resource_group_name    = module.resource_groups[local.primary_region].name
-  contact_emails         = local.alert_emails
+  subnets = {
+    aks = {
+      address_prefixes = ["10.1.1.0/24"]
+    }
+    app = {
+      address_prefixes = ["10.1.2.0/24"]
+    }
+  }
 
-  action_group_name       = "ag-roadmap-maker"
-  action_group_short_name = "RmAlerts"
+  tags = local.common_tags
 
-  budget_name   = "roadmap-maker-annual-budget"
-  budget_amount = 100
-  time_grain    = "Annually"
-  start_date    = "2025-07-01"
-  end_date      = "2025-08-31"
+  depends_on = [module.resource_groups]
+}
 
-  warn_threshold = 50
-  crit_threshold = 70
+# Secondary AKS Cluster in East Asia (native cluster)
+module "secondary_aks" {
+  source              = "./modules/aks"
+  cluster_name        = "roadmap-maker-secondary-aks"
+  location            = "eastasia"
+  resource_group_name = module.resource_groups["eastasia"].name
+  dns_prefix          = "roadmap-maker-secondary"
+  kubernetes_version  = "1.32.5"
+
+  # Node pool configuration
+  node_count          = 2
+  node_vm_size        = "Standard_B2s"
+  enable_auto_scaling = false
+
+  # Resource limits
+  max_pods        = 50
+  os_disk_size_gb = 32
+
+  # Network configuration
+  network_plugin = "azure"
+  network_policy = "azure"
+  vnet_subnet_id = module.secondary_network.subnet_ids["aks"] # vnet for secondary cluster
+
+  # configure service CIDR to avoid conflicts with app subnet
+  service_cidr   = "172.17.0.0/16"
+  dns_service_ip = "172.17.0.10"
+
+  tags = merge(local.common_tags, {
+    cluster-type = "secondary"
+    region       = "secondary"
+  })
+
+  depends_on = [module.secondary_network]
 }
 
 # Data source for current Azure client configuration
@@ -119,9 +156,9 @@ resource "azurerm_postgresql_flexible_server" "primary" {
   name                = "roadmap-maker-${local.primary_region}-psql"
   location            = local.primary_region
   resource_group_name = module.resource_groups[local.primary_region].name
-  zone = "2"
+  zone                = "2"
 
-  sku_name   = "B_Standard_B1ms"  
+  sku_name   = "B_Standard_B1ms"
   version    = "15"
   storage_mb = 32768 # 32GB
 
