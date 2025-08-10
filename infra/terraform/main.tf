@@ -8,6 +8,12 @@ locals {
     managed-by  = "terraform"
     project     = "cloudops-practice"
   }
+  alert_emails = {
+    thanh = "chithanh080804@gmail.com"
+    thuan = "thuan.tongg@gmail.com"
+    an    = "doanquocan205@gmail.com"
+    loc   = "nhloc08@gmail.com"
+  }
 }
 
 # Resource Groups for each region
@@ -57,8 +63,7 @@ module "primary_aks" {
   node_count          = 2              # Create 2 nodes initially for primary cluster
   node_vm_size        = "Standard_B2s" # 2 vCPU, 4GB RAM
   enable_auto_scaling = false
-  # min_count           = 1
-  # max_count           = 5
+
 
   # Resource limits
   max_pods        = 50
@@ -81,6 +86,28 @@ module "primary_aks" {
   depends_on = [module.primary_network]
 }
 
+# Secondary Network in East Asia
+module "secondary_network" {
+  source              = "./modules/network"
+  vnet_name           = "roadmap-maker-secondary-vnet"
+  location            = "eastasia"
+  resource_group_name = module.resource_groups["eastasia"].name
+  address_space       = ["10.1.0.0/16"]
+
+  subnets = {
+    aks = {
+      address_prefixes = ["10.1.1.0/24"]
+    }
+    app = {
+      address_prefixes = ["10.1.2.0/24"]
+    }
+  }
+
+  tags = local.common_tags
+
+  depends_on = [module.resource_groups]
+}
+
 # Secondary AKS Cluster in East Asia (native cluster)
 module "secondary_aks" {
   source              = "./modules/aks"
@@ -94,8 +121,6 @@ module "secondary_aks" {
   node_count          = 2
   node_vm_size        = "Standard_B2s"
   enable_auto_scaling = false
-  # min_count           = 1
-  # max_count           = 5
 
   # Resource limits
   max_pods        = 50
@@ -104,7 +129,7 @@ module "secondary_aks" {
   # Network configuration
   network_plugin = "azure"
   network_policy = "azure"
-  vnet_subnet_id = module.primary_network.subnet_ids["aks"] # Adjust if you have a separate network for eastasia
+  vnet_subnet_id = module.secondary_network.subnet_ids["aks"] # Sử dụng vnet riêng cho secondary
 
   # configure service CIDR to avoid conflicts with app subnet
   service_cidr   = "172.17.0.0/16"
@@ -115,7 +140,7 @@ module "secondary_aks" {
     region       = "secondary"
   })
 
-  depends_on = [module.primary_network]
+  depends_on = [module.secondary_network]
 }
 
 # Data source for current Azure client configuration

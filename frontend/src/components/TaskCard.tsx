@@ -1,122 +1,47 @@
-import { useState } from "react";
-import TrashIcon from "../icons/TrashIcon";
-import type { Id, Task } from "../types";
-import {CSS} from "@dnd-kit/utilities";
 import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import type { Card } from "../types";
+import CardOptionsIcon from "./CardOptionsIcon";
 
 interface Props {
-    task: Task;
-    deleteTask: (id: Id) => void;
-    updateTask: (id: Id, content: string) => void;
+  card: Card;
+  deleteCard: (id: string) => Promise<void>;
+  onEdit: (card: Card) => void;
 }
 
-function TaskCard({ task, deleteTask, updateTask }: Props) {
-    const [mouseIsOver, setMouseIsOver] = useState(false);
-    const [editMode, setEditMode] = useState(false);
+function TaskCard({ card, deleteCard, onEdit }: Props) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: String(card.id) });
 
-    const { 
-        setNodeRef, 
-        attributes, 
-        listeners, 
-        transform, 
-        transition, 
-        isDragging 
-        } = useSortable({
-            id: task.id,
-            data: {
-                type: "Task",
-                task,
-            },
-            disabled: editMode,
-        });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 9999 : "auto",
+    pointerEvents: isDragging ? "none" : "auto",
+  };
 
-    const style = {
-            transition,
-            transform: CSS.Transform.toString(transform),
-        };
-    
-    const  toggleEditMode = () => {
-        setEditMode((prev) => !prev);
-        setMouseIsOver(false);
-    };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="group bg-[#1F1D29] p-2.5 w-full min-h-[120px] flex flex-col justify-center space-y-1 rounded-xl shadow-sm hover:shadow-[0_0_12px_rgba(0,0,0,0.3)] transition-shadow duration-200 relative cursor-pointer"
+    >
+      <CardOptionsIcon card={card} onEdit={onEdit} deleteCard={deleteCard} />
 
-    if (isDragging) {
-        return (
-            <div 
-                ref={setNodeRef} 
-                style={style} 
-                className="opacity-30 bg-gray-800 p-2.5 h-[100px] min-h-[100px] items-center flex text-left rounded-xl border-2 border-rose-500 cursor-grab relative"
-            />
-        );
-    }
-
-    if(editMode) {
-        return (
-        <div 
-            ref={setNodeRef}
-            style={style}
-            {...attributes}
-            {...listeners}
-            className="bg-gray-800 p-2.5 h-[100px] 
-            min-h-[100px] items-center flex text-left rounded-xl
-            hover:ring-2 hover:ring-inset hover:ring-rose-500
-            cursor-grab relative task"
-            >
-                <textarea 
-                    className="
-                        h-[90%]
-                        w-full resize-none border-none rounded bg-transparent
-                        text-white focus:outline-none
-                        "
-                            value={task.content}
-                            autoFocus
-                            placeholder="Task content here"
-                            onBlur={toggleEditMode}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter" && e.shiftKey) {
-                                    toggleEditMode();
-                                }
-                            }}
-                            onChange={(e) => updateTask(task.id, e.target.value)}
-                        >
-
-                </textarea>
-            </div>
-    )}
-
-    return (
-        <div 
-        ref={setNodeRef}
-        style={style}
-        {...attributes}
-        {...listeners}
-        onClick={toggleEditMode}
-        className="bg-gray-800 p-2.5 h-[100px] 
-        min-h-[100px] items-center flex text-left rounded-xl
-        hover:ring-2 hover:ring-inset hover:ring-rose-500
-        cursor-grab relative"
-        onMouseEnter={() =>  {
-            setMouseIsOver(true);
-        }}
-        onMouseLeave={() => {
-            setMouseIsOver(false);
-        }}
-        >
-            <p className="my-auto h-[90%] w-full overflow-y-auto
-            overflow-x-hidden whitespace-pre-wrap">
-                {task.content}
-            </p>
-            {mouseIsOver && ( 
-                <button 
-                onClick={() => {
-                    deleteTask(task.id);
-                }}
-                className="stroke-white absolute right-4 top-1/2-translate-y-1/2 bg-gray-500 p-2 rounded opacity-60 hover:opacity-100">
-                <TrashIcon />
-            </button>
-            )}
-        </div>
-    )
+      <p className="text-md text-gray-500 ml-1">{card.semester}</p>
+      <p className="text-lg font-bold text-white ml-1">{card.content}</p>
+      <p className="text-md text-gray-500 ml-1">{card.subjectName}</p>
+    </div>
+  );
 }
 
 export default TaskCard;
