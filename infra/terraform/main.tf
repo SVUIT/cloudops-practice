@@ -129,7 +129,7 @@ module "secondary_aks" {
   # Network configuration
   network_plugin = "azure"
   network_policy = "azure"
-  vnet_subnet_id = module.secondary_network.subnet_ids["aks"] # Sử dụng vnet riêng cho secondary
+  vnet_subnet_id = module.secondary_network.subnet_ids["aks"] # vnet for secondary cluster
 
   # configure service CIDR to avoid conflicts with app subnet
   service_cidr   = "172.17.0.0/16"
