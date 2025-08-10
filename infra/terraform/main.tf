@@ -8,6 +8,12 @@ locals {
     managed-by  = "terraform"
     project     = "cloudops-practice"
   }
+  alert_emails = {
+    thanh = "chithanh080804@gmail.com"
+    thuan = "thuan.tongg@gmail.com"
+    an    = "doanquocan205@gmail.com"
+    loc   = "nhloc08@gmail.com"
+  }
 }
 
 # Resource Groups for each region
@@ -79,6 +85,25 @@ module "primary_aks" {
   })
 
   depends_on = [module.primary_network]
+}
+
+module "alerts" {
+  source = "./modules/alerts"
+
+  resource_group_name    = module.resource_groups[local.primary_region].name
+  contact_emails         = local.alert_emails
+
+  action_group_name       = "ag-roadmap-maker"
+  action_group_short_name = "RmAlerts"
+
+  budget_name   = "roadmap-maker-annual-budget"
+  budget_amount = 100
+  time_grain    = "Annually"
+  start_date    = "2025-07-01"
+  end_date      = "2025-08-31"
+
+  warn_threshold = 50
+  crit_threshold = 70
 }
 
 # Data source for current Azure client configuration
