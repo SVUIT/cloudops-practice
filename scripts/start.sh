@@ -33,5 +33,21 @@ else
   echo "AKS cluster is not in 'Stopped' state (current: $AKS_STATE), skipping start."
 fi
 
+
+# --- AKS Cluster 2 ---
+AKS_STATE_2=$(az aks show \
+  --name roadmap-maker-secondary-aks \
+  --resource-group roadmap-maker-eastasia-rg \
+  --query "powerState.code" -o tsv)
+
+if [[ "$AKS_STATE_2" == "Stopped" ]]; then
+  echo "Starting AKS cluster 2..."
+  az aks start \
+    --name roadmap-maker-secondary-aks \
+    --resource-group roadmap-maker-eastasia-rg &
+else
+  echo "Cluster 2 is not in 'Stopped' state (current: $AKS_STATE_2), skipping start."
+fi
+
 wait
 echo "All start operations completed."
