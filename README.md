@@ -39,16 +39,62 @@ backend/
  
 ---
 
-## Running the App Locally
+## ⚙️ Environment Variables
 
-### Start Backend
+### Backend (backend/.env)
 
-## 🚀 Quick Start
-> **Note:** The `DATABASE_URL` is configured in the `.env` file in the `backend/` directory.  
+### 🐳 Local Development (Docker)
+```bash
+# Database Configuration for Docker
+POSTGRES_DB
+POSTGRES_USER
+POSTGRES_PASSWORD
+
+# Database URL for Prisma
+DATABASE_URL="postgresql://postgres:password123@localhost:5432/cloudops_db?schema=public"
+
+# Frontend Configuration
+FRONTEND_PORT=5173
+
+```
+### ☁️ Production (Azure PostgreSQL)
+> **Note:** You can retrieve a password/token via:
+
+```bash
+az account get-access-token --resource https://ossrdbms-aad.database.windows.net --query accessToken --ouput tsv
+
+```
+> **Connection string format:**
+
+> 🔑 How to Get the Connection String from Azure Portal
+> 1. Go to Azure Portal and open your PostgreSQL resource:
+  roadmap-maker-southeastasia-psql
+> 2. In the left sidebar, scroll down to Settings → Connect.
+> 3. Copy the connection string in the format:
+
+```bash
+DATABASE_URL=postgresql://<user>:<password>@<host>:<port>/<database>?sslmode=require
+
+```
+### Frontend (frontend/.env)
+
+```bash
+# Backend API Base URL
+VITE_API_BASE_URL
+
+```
+---
+
+# Running the App
+
+## 🖥️ Start Backend
+
+### 🚀 Quick Start
+> **Note:** 
 > Make sure to set this variable to match your PostgreSQL connection string before running migrations or starting the app.
  
- 
-### 1. Start PostgreSQL with Docker
+
+### 1. Start PostgreSQL using Docker (local only)
  
 ```bash
 # In the backend folder
@@ -103,9 +149,9 @@ npm run dev
 ```bash
 docker-compose down
 ```
+---
 
-
-### Start Frontend
+## 🖥️ Start Frontend
 
 > **Note:** The `VITE_API_BASE_URL` variable is configured in the `.env` file in the `frontend/` directory.  
 > Make sure to set this variable to your backend API URL so that the frontend can correctly communicate with the backend.
