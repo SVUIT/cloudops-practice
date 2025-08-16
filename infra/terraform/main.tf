@@ -108,7 +108,7 @@ module "secondary_network" {
   depends_on = [module.resource_groups]
 }
 
-# Secondary AKS Cluster in East Asia (native cluster)
+# Secondary AKS Cluster in East Asia (passie cluster)
 module "secondary_aks" {
   source              = "./modules/aks"
   cluster_name        = "roadmap-maker-secondary-aks"
@@ -224,4 +224,39 @@ resource "azurerm_postgresql_flexible_server_firewall_rule" "aks_subnet" {
   server_id        = azurerm_postgresql_flexible_server.primary.id
   start_ip_address = "10.0.1.0"
   end_ip_address   = "10.0.1.255"
+}
+
+# Traffic Manager Profile
+resource "azurerm_traffic_manager_profile" "tm_profile" {
+  name                   = "roadmap-tm"
+  resource_group_name    = module.resource_groups[local.primary_region].name
+  traffic_routing_method = "Priority"
+  dns_config {
+    relative_name = "roadmap-tm"
+    ttl           = 30
+  }
+  monitor_config {
+    protocol = "HTTPS"
+    port     = 443
+    path     = "/"
+  }
+  tags = local.common_tags
+}
+
+# Primary Endpoint (ví dụ dùng public IP hoặc FQDN của app ở Southeast Asia)
+resource "azurerm_traffic_manager_external_endpoint" "primary" {
+  name              = "primary-endpoint"
+  profile_id        = azurerm_traffic_manager_profile.tm_profile.id
+  target            = "20.195.4.246" // Public Ip of primary AKS app (or FQDN)
+  endpoint_location = "southeastasia"
+  priority          = 1
+}
+
+# Secondary Endpoint (ví dụ dùng public IP hoặc FQDN của app ở East Asia)
+resource "azurerm_traffic_manager_external_endpoint" "secondary" {
+  name              = "secondary-endpoint"
+  profile_id        = azurerm_traffic_manager_profile.tm_profile.id
+  target            = "20.247.48.160"
+  endpoint_location = "eastasia"
+  priority          = 2
 }
