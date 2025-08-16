@@ -21,7 +21,7 @@
   "dependencies": {
     "@prisma/client": "^5.19.1",
     "cors": "^2.8.5",
-    "dotenv": "^17.2.0",
+    "dotenv": "^17.2.1",
     "express": "^4.21.0",
     "prisma": "^5.19.1",
     "swagger-jsdoc": "^6.2.8",

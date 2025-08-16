@@ -1,5 +1,5 @@
 #STAGE 1: Builder
-FROM node:lts-alpine AS builder
+FROM node:22.17.0-alpine AS builder
 
 WORKDIR /app
 
@@ -25,6 +25,6 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 
 USER appuser
 
-EXPOSE 3000
+EXPOSE 5173
 
 CMD ["nginx", "-g", "daemon off;"]

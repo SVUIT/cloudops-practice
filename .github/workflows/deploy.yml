@@ -1,0 +1,85 @@
+name: AKS Deployment
+
+on:
+  push:
+    branches:
+      - 'main'
+
+env:
+  AZ_RG: roadmap-maker-southeastasia-rg
+  AKS_NAME: roadmap-maker-primary-aks
+
+jobs:
+  filter:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Filter changes paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - 'infra/helm/backend/**'
+            frontend:
+              - 'frontend/**'
+              - 'infra/helm/frontend/**'
+  
+  setup:
+    needs: filter
+    if: needs.filter.outputs.backend == 'true' || needs.filter.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Azure CLI
+        uses: azure/login@v1
+        with: 
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Install helm
+        uses: azure/setup-helm@v3
+      
+      - name: Set kube context
+        run: |
+          az aks get-credentials --resource-group $AZ_RG --name $AKS_NAME --overwrite-existing
+      
+  deploy-frontend:
+    needs: [filter, setup]
+    if: needs.filter.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Helm deploy frontend
+        run: |
+            helm upgrade --install roadmap-maker-frontend infra/helm/frontend --namespace roadmap-maker
+            echo "===== POD STATUS (frontend) ====="
+            kubectl get pods -n prod -o wide
+
+  deploy-backend:
+    needs: [filter, setup]
+    if: needs.filter.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Helm deploy backend
+        run: |
+            helm upgrade --install roadmap-maker-backend infra/helm/backend --namespace roadmap-maker
+            echo "===== POD STATUS (backend) ====="
+            kubectl get pods -n prod -o wide
+
+      

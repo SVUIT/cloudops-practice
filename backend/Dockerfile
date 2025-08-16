@@ -1,5 +1,5 @@
-# STAGE 1: Builder
-FROM node:lts-alpine AS builder
+# STAGE 1: Build dependencies & Prisma
+FROM node:20-bullseye-slim AS builder
 
 WORKDIR /app
 
@@ -7,17 +7,24 @@ COPY package*.json ./
 
 RUN npm ci --only=production
 
-COPY . .
+COPY prisma ./prisma
+COPY src ./src
+
+RUN npx prisma generate
 
 # STAGE 2: Runtime
-FROM gcr.io/distroless/nodejs20-debian12
+FROM node:20-bullseye-slim AS production
+
+RUN apt-get update && apt-get install -y libssl1.1
 
 WORKDIR /app
 
-COPY --from=builder /app/ ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/package*.json ./
 
-USER nonroot
+USER node
 
-EXPOSE 5000
+EXPOSE 3000
 
-CMD ["index.js"]
+CMD ["node", "src/server.js"]
