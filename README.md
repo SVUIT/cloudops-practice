@@ -55,14 +55,12 @@ DATABASE_URL="postgresql://postgres:password123@localhost:5432/cloudops_db?schem
 
 # Frontend Configuration
 FRONTEND_PORT=5173
-
 ```
 ### ☁️ Production (Azure PostgreSQL)
 > **Note:** You can retrieve a password/token via:
 
 ```bash
 az account get-access-token --resource https://ossrdbms-aad.database.windows.net --query accessToken --ouput tsv
-
 ```
 > **Connection string format:**
 
@@ -72,16 +70,16 @@ az account get-access-token --resource https://ossrdbms-aad.database.windows.net
 > 2. In the left sidebar, scroll down to Settings → Connect.
 > 3. Copy the connection string in the format:
 
+![alt text](azure-portal-connection-string.png)
+
 ```bash
 DATABASE_URL=postgresql://<user>:<password>@<host>:<port>/<database>?sslmode=require
-
 ```
 ### Frontend (frontend/.env)
 
 ```bash
 # Backend API Base URL
 VITE_API_BASE_URL
-
 ```
 ---
 
