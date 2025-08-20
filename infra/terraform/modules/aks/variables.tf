@@ -102,3 +102,8 @@ variable "dns_service_ip" {
   type        = string
   default     = "172.16.0.10"
 }
+
+variable "log_analytics_workspace_id" {
+  type        = string
+  description = "ID of the Log Analytics workspace for AKS monitoring"
+}
