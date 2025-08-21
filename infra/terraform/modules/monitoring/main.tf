@@ -38,13 +38,13 @@ resource "azurerm_monitor_metric_alert" "node_not_ready" {
   criteria {
     metric_namespace = "microsoft.containerservice/managedclusters"
     metric_name      = "kube_node_status_condition"
-    aggregation      = "Minimum"
-    operator         = "LessThan"
-    threshold        = 1
+    aggregation      = "Total"
+    operator         = "GreaterThan"
+    threshold        = 0
     dimension {
       name     = "condition"
       operator = "Include"
-      values   = ["Ready"]
+      values   = ["NotReady"]
     }
   }
   # action {
