@@ -30,6 +30,11 @@ resource "azurerm_kubernetes_cluster" "default" {
     service_cidr   = var.service_cidr
     dns_service_ip     = var.dns_service_ip 
   }
+  
+  # bật Container Insights
+  oms_agent {
+    log_analytics_workspace_id = var.log_analytics_workspace_id
+  }
 
   # Enable Azure Policy Add-on
   azure_policy_enabled = true

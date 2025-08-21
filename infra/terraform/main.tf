@@ -82,7 +82,7 @@ module "primary_aks" {
     cluster-type = "primary"
     region       = "primary"
   })
-
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
   depends_on = [module.primary_network]
 }
 
@@ -139,9 +139,10 @@ module "secondary_aks" {
     cluster-type = "secondary"
     region       = "secondary"
   })
-
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
   depends_on = [module.secondary_network]
 }
+
 
 module "alerts" {
   source = "./modules/alerts"
@@ -225,3 +226,22 @@ resource "azurerm_postgresql_flexible_server_firewall_rule" "aks_subnet" {
   start_ip_address = "10.0.1.0"
   end_ip_address   = "10.0.1.255"
 }
+
+resource "azurerm_log_analytics_workspace" "main" {
+  name                = "shared-laworkspace"
+  location            = local.primary_region
+  resource_group_name = module.resource_groups[local.primary_region].name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+}
+
+# Monitoring cho aks primary
+module "primary_monitoring" {
+  source                      = "./modules/monitoring"
+  cluster_id                  = module.primary_aks.cluster_id
+  cluster_name                = "roadmap-maker-primary-aks"
+  location                    = local.primary_region
+  resource_group_name         = module.resource_groups[local.primary_region].name
+  log_analytics_workspace_id  = azurerm_log_analytics_workspace.main.id
+}
+
