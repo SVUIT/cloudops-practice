@@ -25,6 +25,17 @@ resource "azurerm_monitor_diagnostic_setting" "aks_diagnostics" {
   }
 }
 
+resource "azurerm_monitor_action_group" "failover" {
+  name                = "ag-failover-func"
+  resource_group_name = var.resource_group_name
+  short_name          = "failover"
+
+  webhook_receiver {
+    name        = "failover-func"
+    service_uri = var.failover_function_url
+  }
+}
+
 # Metric Alert: Node NotReady
 resource "azurerm_monitor_metric_alert" "node_not_ready" {
   name                = "${var.cluster_name}-node-not-ready"
@@ -47,8 +58,8 @@ resource "azurerm_monitor_metric_alert" "node_not_ready" {
       values   = ["NotReady"]
     }
   }
-  # action {
-  #  action_group_id = azurerm_monitor_action_group.failover_action.id
-  # }
+  action {
+   action_group_id = azurerm_monitor_action_group.failover.id
+  }
 }
 
