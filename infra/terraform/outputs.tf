@@ -14,9 +14,9 @@ output "resource_group_locations" {
 }
 
 output "traffic_manager_profile_name" {
-  value = azurerm_traffic_manager_profile.tm_profile.name
+  value = module.traffic_manager.profile_name
 }
 
 output "traffic_manager_profile_fqdn" {
-  value = azurerm_traffic_manager_profile.tm_profile.fqdn
+  value = module.traffic_manager.profile_fqdn
 }
