@@ -21,3 +21,8 @@ variable "resource_group_name" {
 variable "log_analytics_workspace_id" { 
   type = string 
 }
+
+variable "failover_function_url" {
+  description = "The URL of the Azure Function for failover"
+  type        = string
+}

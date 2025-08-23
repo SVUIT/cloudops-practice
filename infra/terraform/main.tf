@@ -235,6 +235,15 @@ resource "azurerm_log_analytics_workspace" "main" {
   retention_in_days   = 30
 }
 
+# Deploy azure function
+module "function" {
+  source                = "./modules/function"
+  function_name         = "traffic-switch-func"
+  resource_group_name   = module.resource_groups[local.primary_region].name
+  location              = local.primary_region
+  storage_account_name  = "trafficswitchfuncsa"
+}
+
 # Monitoring cho aks primary
 module "primary_monitoring" {
   source                      = "./modules/monitoring"
@@ -243,5 +252,8 @@ module "primary_monitoring" {
   location                    = local.primary_region
   resource_group_name         = module.resource_groups[local.primary_region].name
   log_analytics_workspace_id  = azurerm_log_analytics_workspace.main.id
+  failover_function_url       = "https://${module.function.function_hostname}/api/FailoverTrigger"
 }
+
+
 
