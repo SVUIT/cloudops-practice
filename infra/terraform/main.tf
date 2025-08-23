@@ -255,7 +255,7 @@ module "primary_monitoring" {
   failover_function_url      = "https://${module.function.function_hostname}/api/FailoverTrigger"
 }
 
-module "traffic_manager" {
+module "traffic-manager" {
   source                 = "./modules/traffic-manager"
   profile_name           = "roadmap-tm"
   resource_group_name    = module.resource_groups[local.primary_region].name
