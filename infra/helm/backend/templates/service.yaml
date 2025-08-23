@@ -6,9 +6,10 @@ metadata:
     {{- include "backend.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
+  loadBalancerIP: {{ .Values.service.loadBalancerIP }}
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: http
+    - port: {{ .Values.service.port }}   
+      targetPort: {{ .Values.service.targetPort }}
       protocol: TCP
       name: http
   selector:

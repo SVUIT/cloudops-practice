@@ -36,6 +36,13 @@ jobs:
     if: needs.filter.outputs.backend == 'true' || needs.filter.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     steps:
+      
+      
+  deploy-frontend:
+    needs: filter
+    if: needs.filter.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
       - name: Checkout source
         uses: actions/checkout@v4
 
@@ -53,14 +60,6 @@ jobs:
       - name: Set kube context
         run: |
           az aks get-credentials --resource-group $AZ_RG --name $AKS_NAME --overwrite-existing
-      
-  deploy-frontend:
-    needs: [filter, setup]
-    if: needs.filter.outputs.frontend == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
 
       - name: Helm deploy frontend
         run: |

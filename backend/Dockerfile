@@ -5,7 +5,7 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm ci --only=production
+RUN npm ci
 
 COPY prisma ./prisma
 COPY src ./src
@@ -22,6 +22,7 @@ WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/src ./src
 COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/prisma ./prisma
 
 USER node
 
