@@ -2,7 +2,7 @@
 
 ## Quick Start
 
-### 1. Start PostgreSQL Database:
+### 1. Start PostgreSQL Database::
 ```bash
 # Trong folder backend
 docker-compose up -d
