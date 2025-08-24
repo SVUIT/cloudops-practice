@@ -1,0 +1,5 @@
+service:
+  loadBalancerIP: "52.175.36.0"
+
+config:
+  apiUrl: "http://52.184.68.162"

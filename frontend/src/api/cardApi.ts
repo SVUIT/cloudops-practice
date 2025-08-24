@@ -1,8 +1,7 @@
-//cardApi.ts
-
 import type { Card } from "../types";
+import config from "../config";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = config.API_BASE_URL;
 
 export async function fetchCards(): Promise<Card[]> {
   try {
