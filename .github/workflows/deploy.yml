@@ -100,7 +100,7 @@ jobs:
           echo "===== POD STATUS (frontend - secondary) ====="
           kubectl get pods -n roadmap-maker -o wide
 
-deploy-backend:
+  deploy-backend:
     needs: [filter, migrate-db]
     if: needs.filter.outputs.backend == 'true'
     runs-on: ubuntu-latest
