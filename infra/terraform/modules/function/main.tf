@@ -6,6 +6,19 @@ resource "azurerm_storage_account" "function_app_storage" {
   account_replication_type = "LRS"
 }
 
+resource "azurerm_storage_container" "function_code" {
+  name                  = "function-releases"
+  storage_account_name  = azurerm_storage_account.function_app_storage.name
+  container_access_type = "private"
+}
+
+resource "azurerm_storage_blob" "function_zip" {
+  name                   = "function-code.zip"
+  storage_account_name   = azurerm_storage_account.function_app_storage.name
+  storage_container_name = azurerm_storage_container.function_code.name
+  type                   = "Block"
+  source                 = "${path.module}/../../../function-code.zip"
+}
 
 resource "azurerm_app_service_plan" "function_app_plan" {
   name                = "${var.function_name}-plan"
@@ -38,10 +51,20 @@ resource "azurerm_function_app" "function_app_python" {
   version                    = "~4"
 
   app_settings = {
-    FUNCTIONS_WORKER_RUNTIME = "python"
+    FUNCTIONS_WORKER_RUNTIME     = "python"
+    FUNCTIONS_EXTENSION_VERSION  = "~4"
+    AzureWebJobsStorage         = azurerm_storage_account.function_app_storage.primary_connection_string
+    WEBSITE_RUN_FROM_PACKAGE    = "https://${azurerm_storage_account.function_app_storage.name}.blob.core.windows.net/${azurerm_storage_container.function_code.name}/${azurerm_storage_blob.function_zip.name}"
+    SUBSCRIPTION_ID     = var.azure_subscription_id
+    RESOURCE_GROUP = var.resource_group_name
+    PROFILE_NAME   = var.traffic_manager_profile_name
   }
 
   site_config {
     linux_fx_version = "python|3.9"
   }
+  identity {
+    type = "SystemAssigned"
+  }
+  depends_on = [azurerm_storage_blob.function_zip]
 }

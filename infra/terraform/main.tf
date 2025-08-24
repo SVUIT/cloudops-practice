@@ -237,11 +237,13 @@ resource "azurerm_log_analytics_workspace" "main" {
 
 # Deploy azure function
 module "function" {
-  source               = "./modules/function"
-  function_name        = "traffic-switch-func"
-  resource_group_name  = module.resource_groups[local.primary_region].name
-  location             = local.primary_region
-  storage_account_name = "trafficswitchfuncsa"
+  source                = "./modules/function"
+  function_name         = "traffic-switch-func"
+  resource_group_name   = module.resource_groups[local.primary_region].name
+  location              = local.primary_region
+  storage_account_name  = "trafficswitchfuncsa"
+  azure_subscription_id         = data.azurerm_client_config.current.subscription_id
+  traffic_manager_profile_name  = "roadmap-maker-tm"
 }
 
 # Monitoring cho aks primary
