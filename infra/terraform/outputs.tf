@@ -14,9 +14,9 @@ output "resource_group_locations" {
 }
 
 output "traffic_manager_profile_name" {
-  value = module.traffic_manager.profile_name
+  value = module.traffic-manager.profile_name
 }
 
 output "traffic_manager_profile_fqdn" {
-  value = module.traffic_manager.profile_fqdn
+  value = module.traffic-manager.profile_fqdn
 }
