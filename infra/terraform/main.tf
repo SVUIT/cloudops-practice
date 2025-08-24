@@ -45,6 +45,8 @@ module "primary_network" {
     }
   }
 
+  inbound_ports = [5137, 3000, 80]
+
   tags = local.common_tags
 
   depends_on = [module.resource_groups]
@@ -102,6 +104,8 @@ module "secondary_network" {
       address_prefixes = ["10.1.2.0/24"]
     }
   }
+
+  inbound_ports = [5137, 3000, 80]
 
   tags = local.common_tags
 
@@ -180,16 +184,19 @@ resource "azurerm_postgresql_flexible_server" "primary" {
 
   sku_name   = "B_Standard_B1ms"
   version    = "15"
-  storage_mb = 32768 # 32GB
+  storage_mb = 32768
 
   backup_retention_days        = 7
   geo_redundant_backup_enabled = true
 
   authentication {
     active_directory_auth_enabled = true
-    password_auth_enabled         = false
+    password_auth_enabled         = true
     tenant_id                     = data.azurerm_client_config.current.tenant_id
   }
+
+  administrator_login    = "adminuser"
+  administrator_password = var.postgres_admin_password
 
   tags = local.common_tags
 }
@@ -237,13 +244,13 @@ resource "azurerm_log_analytics_workspace" "main" {
 
 # Deploy azure function
 module "function" {
-  source                = "./modules/function"
-  function_name         = "traffic-switch-func"
-  resource_group_name   = module.resource_groups[local.primary_region].name
-  location              = local.primary_region
-  storage_account_name  = "trafficswitchfuncsa"
-  azure_subscription_id         = data.azurerm_client_config.current.subscription_id
-  traffic_manager_profile_name  = "roadmap-maker-tm"
+  source                       = "./modules/function"
+  function_name                = "traffic-switch-func"
+  resource_group_name          = module.resource_groups[local.primary_region].name
+  location                     = local.primary_region
+  storage_account_name         = "trafficswitchfuncsa"
+  azure_subscription_id        = data.azurerm_client_config.current.subscription_id
+  traffic_manager_profile_name = "roadmap-maker-tm"
 }
 
 # Monitoring cho aks primary

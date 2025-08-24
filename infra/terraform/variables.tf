@@ -47,4 +47,10 @@ variable "ARM_CLIENT_SECRET" {
   description = "Service principal client secret"
   type        = string
   sensitive   = true
-} 
+}
+
+variable "postgres_admin_password" {
+  description = "Password for PostgreSQL admin user"
+  type        = string
+  sensitive   = true
+}
