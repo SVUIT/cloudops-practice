@@ -45,11 +45,19 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
+      - name: Zip Azure Function App
+        if: needs.filter.outputs.infra == 'true'
+        run: |
+          cd azure-function-app
+          zip -r ../infra/function-code.zip . -x "*.git*" "*__pycache__*" "*.pyc" ".vscode/*" "local.settings.json"
+          ls -la ../infra/function-code.zip
+          echo "Function app zipped successfully"
+          
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with: 
           terraform_version: 1.4.0
-
+        
       - name: Terraform Init
         id: init
         working-directory: infra/terraform
