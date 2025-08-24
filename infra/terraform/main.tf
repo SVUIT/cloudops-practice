@@ -83,7 +83,7 @@ module "primary_aks" {
     region       = "primary"
   })
   log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
-  depends_on = [module.primary_network]
+  depends_on                 = [module.primary_network]
 }
 
 # Secondary Network in East Asia
@@ -108,7 +108,7 @@ module "secondary_network" {
   depends_on = [module.resource_groups]
 }
 
-# Secondary AKS Cluster in East Asia (native cluster)
+# Secondary AKS Cluster in East Asia (passive cluster)
 module "secondary_aks" {
   source              = "./modules/aks"
   cluster_name        = "roadmap-maker-secondary-aks"
@@ -140,15 +140,15 @@ module "secondary_aks" {
     region       = "secondary"
   })
   log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
-  depends_on = [module.secondary_network]
+  depends_on                 = [module.secondary_network]
 }
 
 
 module "alerts" {
   source = "./modules/alerts"
 
-  resource_group_name    = module.resource_groups[local.primary_region].name
-  contact_emails         = local.alert_emails
+  resource_group_name = module.resource_groups[local.primary_region].name
+  contact_emails      = local.alert_emails
 
   action_group_name       = "ag-roadmap-maker"
   action_group_short_name = "RmAlerts"
@@ -237,23 +237,48 @@ resource "azurerm_log_analytics_workspace" "main" {
 
 # Deploy azure function
 module "function" {
-  source                = "./modules/function"
-  function_name         = "traffic-switch-func"
-  resource_group_name   = module.resource_groups[local.primary_region].name
-  location              = local.primary_region
-  storage_account_name  = "trafficswitchfuncsa"
+  source               = "./modules/function"
+  function_name        = "traffic-switch-func"
+  resource_group_name  = module.resource_groups[local.primary_region].name
+  location             = local.primary_region
+  storage_account_name = "trafficswitchfuncsa"
 }
 
 # Monitoring cho aks primary
 module "primary_monitoring" {
-  source                      = "./modules/monitoring"
-  cluster_id                  = module.primary_aks.cluster_id
-  cluster_name                = "roadmap-maker-primary-aks"
-  location                    = local.primary_region
-  resource_group_name         = module.resource_groups[local.primary_region].name
-  log_analytics_workspace_id  = azurerm_log_analytics_workspace.main.id
-  failover_function_url       = "https://${module.function.function_hostname}/api/FailoverTrigger"
+  source                     = "./modules/monitoring"
+  cluster_id                 = module.primary_aks.cluster_id
+  cluster_name               = "roadmap-maker-primary-aks"
+  location                   = local.primary_region
+  resource_group_name        = module.resource_groups[local.primary_region].name
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
+  failover_function_url      = "https://${module.function.function_hostname}/api/FailoverTrigger"
 }
 
+module "traffic-manager" {
+  source                 = "./modules/traffic-manager"
+  profile_name           = "roadmap-tm"
+  resource_group_name    = module.resource_groups[local.primary_region].name
+  traffic_routing_method = "Priority"
+  dns_relative_name      = "roadmap-tm"
+  dns_ttl                = 30
+  monitor_protocol       = "HTTPS"
+  monitor_port           = 443
+  monitor_path           = "/"
+  tags                   = local.common_tags
 
-
+  endpoints = [
+    {
+      name     = "primary-endpoint"
+      target   = "roadmap-maker.southeastasia.cloudapp.azure.com"
+      location = "southeastasia"
+      priority = 1
+    },
+    {
+      name     = "secondary-endpoint"
+      target   = "roadmap-maker.eastasia.cloudapp.azure.com"
+      location = "eastasia"
+      priority = 2
+    }
+  ]
+}
