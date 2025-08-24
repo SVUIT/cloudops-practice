@@ -80,14 +80,15 @@ resource "azurerm_network_security_group" "nsg" {
 }
 
 resource "azurerm_network_security_rule" "inbound" {
-  for_each                    = toset([for p in var.inbound_ports : tostring(p)])
-  name                        = "allow-inbound-port-${each.value}"
-  priority                    = 100 + tonumber(each.value)
+  for_each = { for idx, p in var.inbound_ports : tostring(p) => idx }
+
+  name                        = "allow-inbound-port-${each.key}"
+  priority                    = 100 + each.value
   direction                   = "Inbound"
   access                      = "Allow"
   protocol                    = "Tcp"
   source_port_range           = "*"
-  destination_port_range      = tostring(each.value)
+  destination_port_range      = each.key
   source_address_prefix       = "*"
   destination_address_prefix  = "*"
   network_security_group_name = azurerm_network_security_group.nsg.name
