@@ -22,7 +22,7 @@ variable "address_space" {
 variable "subnets" {
   description = "Map of subnet configurations"
   type = map(object({
-    address_prefixes = list(string)
+    address_prefixes  = list(string)
     service_endpoints = optional(list(string), [])
     delegation = optional(object({
       name = string
@@ -39,4 +39,10 @@ variable "tags" {
   description = "Tags to apply to the network resources"
   type        = map(string)
   default     = {}
+}
+
+variable "inbound_ports" {
+  description = "List of inbound ports to allow in NSG"
+  type        = list(number)
+  default     = []
 }
