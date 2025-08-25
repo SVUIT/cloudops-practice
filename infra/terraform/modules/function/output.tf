@@ -1,11 +1,12 @@
 output "function_hostname" {
-  value = azurerm_function_app.function_app_python.default_hostname
+  value = azurerm_linux_function_app.function_app.default_hostname
 }
 
 output "function_url" {
-  value = "https://${azurerm_function_app.function_app_python.default_hostname}"
+  value = "https://${azurerm_linux_function_app.function_app.default_hostname}"
 }
 
+
 output "function_name" {
-  value = azurerm_function_app.function_app_python.name
+  value = azurerm_linux_function_app.function_app.name
 }

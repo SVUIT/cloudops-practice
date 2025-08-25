@@ -20,51 +20,61 @@ resource "azurerm_storage_blob" "function_zip" {
   source                 = "${path.module}/../../../function-code.zip"
 }
 
-resource "azurerm_app_service_plan" "function_app_plan" {
-  name                = "${var.function_name}-plan"
-  location            = var.location
-  resource_group_name = var.resource_group_name
-  kind                = "Linux"
-  reserved            = true
+# Generate SAS token for blob access
+data "azurerm_storage_account_blob_container_sas" "function_zip_sas" {
+  connection_string = azurerm_storage_account.function_app_storage.primary_connection_string
+  container_name    = azurerm_storage_container.function_code.name
+  https_only        = true
 
-  sku {
-    tier = "Dynamic"
-    size = "Y1"
-  }
+  start  = "2024-01-01T00:00:00Z"
+  expiry = "2030-01-01T00:00:00Z"
 
-  lifecycle {
-    ignore_changes = [
-      kind
-    ]
+  permissions {
+    read   = true
+    add    = false
+    create = false
+    write  = false
+    delete = false
+    list   = false
   }
 }
 
+resource "azurerm_service_plan" "function_app_plan" {
+  name                = "${var.function_name}-plan"
+  resource_group_name = var.resource_group_name
+  location            = var.location
+  os_type             = "Linux"
+  sku_name            = "Y1"
+}
 
-resource "azurerm_function_app" "function_app_python" {
-  name                       = var.function_name
-  location                   = var.location
-  resource_group_name        = var.resource_group_name
-  app_service_plan_id        = azurerm_app_service_plan.function_app_plan.id
+resource "azurerm_linux_function_app" "function_app" {
+  name                = var.function_name
+  resource_group_name = var.resource_group_name
+  location            = var.location
+
   storage_account_name       = azurerm_storage_account.function_app_storage.name
   storage_account_access_key = azurerm_storage_account.function_app_storage.primary_access_key
-  os_type                    = "linux"
-  version                    = "~4"
+  service_plan_id            = azurerm_service_plan.function_app_plan.id
+
+  site_config {
+    application_stack {
+      python_version = "3.11"
+    }
+  }
 
   app_settings = {
     FUNCTIONS_WORKER_RUNTIME     = "python"
     FUNCTIONS_EXTENSION_VERSION  = "~4"
     AzureWebJobsStorage         = azurerm_storage_account.function_app_storage.primary_connection_string
-    WEBSITE_RUN_FROM_PACKAGE    = "https://${azurerm_storage_account.function_app_storage.name}.blob.core.windows.net/${azurerm_storage_container.function_code.name}/${azurerm_storage_blob.function_zip.name}"
+    WEBSITE_RUN_FROM_PACKAGE = "https://${azurerm_storage_account.function_app_storage.name}.blob.core.windows.net/${azurerm_storage_container.function_code.name}/${azurerm_storage_blob.function_zip.name}${data.azurerm_storage_account_blob_container_sas.function_zip_sas.sas}"
     SUBSCRIPTION_ID     = var.azure_subscription_id
     RESOURCE_GROUP = var.resource_group_name
     PROFILE_NAME   = var.traffic_manager_profile_name
   }
-
-  site_config {
-    linux_fx_version = "python|3.9"
-  }
+  
   identity {
     type = "SystemAssigned"
   }
   depends_on = [azurerm_storage_blob.function_zip]
+
 }
