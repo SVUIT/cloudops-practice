@@ -25,5 +25,5 @@ output "subnet_address_prefixes" {
 
 output "aks_nsg_id" {
   description = "ID of the AKS Network Security Group"
-  value       = contains(keys(var.subnets), "aks") ? azurerm_network_security_group.aks_nsg[0].id : null
+  value       = contains(keys(var.subnets), "aks") ? azurerm_network_security_group.aks_nsg.id : null
 }

@@ -57,5 +57,5 @@ resource "azurerm_network_security_rule" "aks_inbound" {
 resource "azurerm_subnet_network_security_group_association" "aks_nsg_association" {
   count                     = contains(keys(var.subnets), "aks") ? 1 : 0
   subnet_id                 = azurerm_subnet.subnets["aks"].id
-  network_security_group_id = azurerm_network_security_group.aks_nsg[0].id
+  network_security_group_id = azurerm_network_security_group.aks_nsg.id
 }
