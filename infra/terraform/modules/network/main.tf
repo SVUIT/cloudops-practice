@@ -31,58 +31,16 @@ resource "azurerm_subnet" "subnets" {
 
 # Network Security Group for AKS subnet
 resource "azurerm_network_security_group" "aks_nsg" {
-  count               = contains(keys(var.subnets), "aks") ? 1 : 0
   name                = "${var.vnet_name}-aks-nsg"
-  location            = var.location
-  resource_group_name = var.resource_group_name
-
-  # Allow inbound traffic for AKS
-  security_rule {
-    name                       = "AllowAKSInbound"
-    priority                   = 1000
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "*"
-    source_port_range          = "*"
-    destination_port_range     = "*"
-    source_address_prefix      = "VirtualNetwork"
-    destination_address_prefix = "*"
-  }
-
-  # Allow outbound traffic for AKS
-  security_rule {
-    name                       = "AllowAKSOutbound"
-    priority                   = 1000
-    direction                  = "Outbound"
-    access                     = "Allow"
-    protocol                   = "*"
-    source_port_range          = "*"
-    destination_port_range     = "*"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-
-  tags = var.tags
-}
-
-# Associate NSG with AKS subnet
-resource "azurerm_subnet_network_security_group_association" "aks_nsg_association" {
-  count                     = contains(keys(var.subnets), "aks") ? 1 : 0
-  subnet_id                 = azurerm_subnet.subnets["aks"].id
-  network_security_group_id = azurerm_network_security_group.aks_nsg[0].id
-}
-
-resource "azurerm_network_security_group" "nsg" {
-  name                = "${var.vnet_name}-nsg"
   location            = var.location
   resource_group_name = var.resource_group_name
   tags                = var.tags
 }
 
-resource "azurerm_network_security_rule" "inbound" {
+resource "azurerm_network_security_rule" "aks_inbound" {
   for_each = { for idx, p in var.inbound_ports : tostring(p) => idx }
 
-  name                        = "allow-inbound-port-${each.key}"
+  name                        = "allow-aks-inbound-port-${each.key}"
   priority                    = 100 + each.value
   direction                   = "Inbound"
   access                      = "Allow"
@@ -91,6 +49,13 @@ resource "azurerm_network_security_rule" "inbound" {
   destination_port_range      = each.key
   source_address_prefix       = "*"
   destination_address_prefix  = "*"
-  network_security_group_name = azurerm_network_security_group.nsg.name
+  network_security_group_name = azurerm_network_security_group.aks_nsg.name
   resource_group_name         = var.resource_group_name
+}
+
+# Associate NSG with AKS subnet
+resource "azurerm_subnet_network_security_group_association" "aks_nsg_association" {
+  count                     = contains(keys(var.subnets), "aks") ? 1 : 0
+  subnet_id                 = azurerm_subnet.subnets["aks"].id
+  network_security_group_id = azurerm_network_security_group.aks_nsg.id
 }
